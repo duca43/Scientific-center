@@ -1,3 +1,3 @@
-### Scientific center UI
+### Scientific center
 
 - Repository for scientific center application
