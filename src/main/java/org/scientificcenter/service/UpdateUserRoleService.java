@@ -9,7 +9,9 @@ import org.scientificcenter.model.Authority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -52,9 +54,16 @@ public class UpdateUserRoleService implements JavaDelegate {
         this.identityService.createMembership(accountVerificationDto.getUsername(), groupId);
         UpdateUserRoleService.log.info("Camunda user with username '{}' is added to group '{}", accountVerificationDto.getUsername(), groupId);
 
-        final String role = reviewer ? UpdateUserRoleService.ROLE_REVIEWER : UpdateUserRoleService.ROLE_USER;
-        final Authority userAuthority = this.authorityService.findByName(role);
-        user.setAuthorities(Collections.singleton(userAuthority));
-        UpdateUserRoleService.log.info("User entity with username: {} has gained following authority: {}", accountVerificationDto.getUsername(), role);
+        final Set<Authority> authorities = new HashSet<>();
+        authorities.add(this.authorityService.findByName(UpdateUserRoleService.ROLE_USER));
+
+        if (reviewer) {
+            authorities.add(this.authorityService.findByName(UpdateUserRoleService.ROLE_REVIEWER));
+        }
+
+        user.setAuthorities(authorities);
+        UpdateUserRoleService.log.info("User entity with username: {} has gained following authorities: {}",
+                accountVerificationDto.getUsername(),
+                authorities.stream().map(Authority::getAuthority).collect(Collectors.toList()));
     }
 }

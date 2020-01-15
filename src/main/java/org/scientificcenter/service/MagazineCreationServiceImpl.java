@@ -66,6 +66,9 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
     private static final String CHECK_MAGAZINE_DATA_TASK = "Check_magazine_data_task";
     private static final String MAGAZINE_ACTIVATED = "magazineActivated";
     private static final String MAGAZINE_ISSN = "magazine_issn";
+    private final static String EDITORS = "editors";
+    private final static String REVIEWERS = "reviewers";
+    private static final String ROLE_REVIEWER = "ROLE_REVIEWER";
 
     @Autowired
     public MagazineCreationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final UserService userService, final AuthorityService authorityService, final MagazineService magazineService, final Util util) {
@@ -146,6 +149,17 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
         MagazineCreationServiceImpl.log.info("Retrieved choose editors and reviewers task");
 
         final List<FormField> formFields = this.formService.getTaskFormData(task.getId()).getFormFields();
+
+        this.util.fillMultipleEnumFormFields(this.magazineService.findByIssn(issn),
+                formFields,
+                UserEnumFormFieldDto.builder()
+                        .id(MagazineCreationServiceImpl.EDITORS)
+                        .role(MagazineCreationServiceImpl.ROLE_EDITOR)
+                        .build(),
+                UserEnumFormFieldDto.builder()
+                        .id(MagazineCreationServiceImpl.REVIEWERS)
+                        .role(MagazineCreationServiceImpl.ROLE_REVIEWER)
+                        .build());
 
         return FormFieldsDto.builder()
                 .processInstanceId(processInstanceId)

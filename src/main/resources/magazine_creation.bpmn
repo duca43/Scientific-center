@@ -46,7 +46,7 @@
     <bpmn:userTask id="Check_magazine_data_task" name="Check magazine data">
       <bpmn:extensionElements>
         <camunda:formData>
-          <camunda:formField id="issn" label="ISSN" type="long">
+          <camunda:formField id="issn" label="ISSN" type="string">
             <camunda:validation>
               <camunda:constraint name="readonly" />
             </camunda:validation>
@@ -114,7 +114,6 @@
             </camunda:validation>
           </camunda:formField>
         </camunda:formData>
-        <camunda:taskListener delegateExpression="${chooseEditorsAndReviewersHandler}" event="create" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_1d311op</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_02m6abr</bpmn:outgoing>
