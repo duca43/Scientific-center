@@ -3,7 +3,7 @@ package org.scientificcenter.service;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
-import org.scientificcenter.security.TokenUtils;
+import org.jasypt.util.text.BasicTextEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -22,7 +22,6 @@ import java.io.UnsupportedEncodingException;
 public class EmailService implements JavaDelegate {
 
     private final JavaMailSender javaMailSender;
-    private final TokenUtils tokenUtils;
     @Value("${spring.mail.username}")
     private String senderEmail;
     @Value("${mail.alias}")
@@ -34,11 +33,12 @@ public class EmailService implements JavaDelegate {
     @Value("${scientific-center.expires-in}")
     private int TOKEN_EXPIRES_IN;
     private static final String HTTP_PREFIX = "http://";
+    private final BasicTextEncryptor basicTextEncryptor;
 
     @Autowired
-    public EmailService(final JavaMailSender javaMailSender, final TokenUtils tokenUtils) {
+    public EmailService(final JavaMailSender javaMailSender, final BasicTextEncryptor basicTextEncryptor) {
         this.javaMailSender = javaMailSender;
-        this.tokenUtils = tokenUtils;
+        this.basicTextEncryptor = basicTextEncryptor;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class EmailService implements JavaDelegate {
 
     @Async
     public void sendRegistrationNotification(final String username, final String email) throws MailException, MessagingException {
-        EmailService.log.info("Sending email to '{}' with email address: '{}", username, email);
+        EmailService.log.info("Sending email to '{}' with email address: '{}'", username, email);
 
         final MimeMessage mail = this.javaMailSender.createMimeMessage();
         final MimeMessageHelper helper = new MimeMessageHelper(mail, false, "utf-8");
@@ -60,12 +60,14 @@ public class EmailService implements JavaDelegate {
             helper.setTo(email);
             helper.setFrom(new InternetAddress(this.senderEmail, this.senderAlias));
             helper.setSubject("Scientific Center - Account activation");
+            final String activationCode = this.basicTextEncryptor.encrypt(username);
+            EmailService.log.info("Created activation code: {}", activationCode);
             final String message = "Hello " + username + ",<br><br>"
                     + "Thank you for registering your Scientific center account. To finally activate your account please "
                     + "<a href=\"" + this.makeActivationLink(username) + "\">click here.</a><br><br>"
                     + "<p>Use this code to activate your account: "
                     + "<b>"
-                    + this.tokenUtils.generateToken(username)
+                    + activationCode
                     + "</b>"
                     + "</p><br>"
                     + "Regards, <br><br>"

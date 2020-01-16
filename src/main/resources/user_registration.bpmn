@@ -110,7 +110,6 @@
     <bpmn:sequenceFlow id="SequenceFlow_0mcuaao" name="Yes" sourceRef="ExclusiveGateway_1xnltoh" targetRef="Check_reviewer_task">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${reviewer == true}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="SequenceFlow_1erjafe" sourceRef="Registration_form_task" targetRef="User_validation_task" />
     <bpmn:serviceTask id="Send_email_task" name="Send email to user" camunda:delegateExpression="${emailService}">
       <bpmn:incoming>SequenceFlow_19bfovm</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_16jukqn</bpmn:outgoing>
@@ -146,7 +145,7 @@
     <bpmn:sequenceFlow id="SequenceFlow_18qqs39" sourceRef="User_validation_task" targetRef="ExclusiveGateway_1b2tcm5" />
     <bpmn:exclusiveGateway id="ExclusiveGateway_0j32al2">
       <bpmn:incoming>SequenceFlow_1j0j7pr</bpmn:incoming>
-      <bpmn:incoming>SequenceFlow_0clyq9j</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_09aqurr</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1e8ik7l</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="SequenceFlow_1e8ik7l" sourceRef="ExclusiveGateway_0j32al2" targetRef="Registration_form_task" />
@@ -156,20 +155,10 @@
       <bpmn:outgoing>SequenceFlow_09aqurr</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="SequenceFlow_1chird1" name="No" sourceRef="ExclusiveGateway_1b2tcm5" targetRef="Save_user_task" />
-    <bpmn:sequenceFlow id="SequenceFlow_09aqurr" name="Yes" sourceRef="ExclusiveGateway_1b2tcm5" targetRef="User_already_exists_message">
+    <bpmn:sequenceFlow id="SequenceFlow_09aqurr" name="Yes" sourceRef="ExclusiveGateway_1b2tcm5" targetRef="ExclusiveGateway_0j32al2">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${user_exists}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="SequenceFlow_1e32oiy" sourceRef="Update_user_role_task" targetRef="EndEvent_0xclbb3" />
-    <bpmn:sequenceFlow id="SequenceFlow_0clyq9j" sourceRef="User_already_exists_message" targetRef="ExclusiveGateway_0j32al2" />
-    <bpmn:userTask id="User_already_exists_message" name="User already exists message" camunda:assignee="${user_initiator}">
-      <bpmn:extensionElements>
-        <camunda:formData>
-          <camunda:formField id="user_exists_message" type="string" defaultValue="User with username &#39;${username}&#39; and/or email &#39;${email}&#39; already exists!" />
-        </camunda:formData>
-      </bpmn:extensionElements>
-      <bpmn:incoming>SequenceFlow_09aqurr</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_0clyq9j</bpmn:outgoing>
-    </bpmn:userTask>
     <bpmn:serviceTask id="Save_user_task" name="Save user" camunda:class="org.scientificcenter.service.RegistrationServiceImpl">
       <bpmn:incoming>SequenceFlow_1chird1</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_19bfovm</bpmn:outgoing>
@@ -212,6 +201,7 @@
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="SequenceFlow_1k8zfxc" sourceRef="ExclusiveGateway_1h941zn" targetRef="Confirm_registration_task" />
     <bpmn:sequenceFlow id="SequenceFlow_0pv4vr3" sourceRef="Check_reviewer_task" targetRef="ExclusiveGateway_0i5tghh" />
+    <bpmn:sequenceFlow id="SequenceFlow_1erjafe" sourceRef="Registration_form_task" targetRef="User_validation_task" />
   </bpmn:process>
   <bpmn:message id="Message_181x7n7" name="Message_1ofhsv2" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -245,10 +235,6 @@
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1821" y="173" width="18" height="14" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_1erjafe_di" bpmnElement="SequenceFlow_1erjafe">
-        <di:waypoint x="460" y="237" />
-        <di:waypoint x="550" y="237" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ServiceTask_0m0n7to_di" bpmnElement="Send_email_task">
         <dc:Bounds x="1010" y="197" width="100" height="80" />
@@ -328,23 +314,16 @@
       <bpmndi:BPMNEdge id="SequenceFlow_09aqurr_di" bpmnElement="SequenceFlow_09aqurr">
         <di:waypoint x="720" y="212" />
         <di:waypoint x="720" y="120" />
-        <di:waypoint x="550" y="120" />
+        <di:waypoint x="280" y="120" />
+        <di:waypoint x="280" y="212" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="691" y="163" width="18" height="14" />
+          <dc:Bounds x="681" y="173" width="18" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_1e32oiy_di" bpmnElement="SequenceFlow_1e32oiy">
         <di:waypoint x="2350" y="237" />
         <di:waypoint x="2422" y="237" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_0clyq9j_di" bpmnElement="SequenceFlow_0clyq9j">
-        <di:waypoint x="450" y="120" />
-        <di:waypoint x="280" y="120" />
-        <di:waypoint x="280" y="212" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="UserTask_0hke6fr_di" bpmnElement="User_already_exists_message">
-        <dc:Bounds x="450" y="80" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_1h0kfy8_di" bpmnElement="Save_user_task">
         <dc:Bounds x="830" y="197" width="100" height="80" />
       </bpmndi:BPMNShape>
@@ -404,6 +383,10 @@
         <di:waypoint x="2060" y="120" />
         <di:waypoint x="2160" y="120" />
         <di:waypoint x="2160" y="212" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1erjafe_di" bpmnElement="SequenceFlow_1erjafe">
+        <di:waypoint x="460" y="237" />
+        <di:waypoint x="550" y="237" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

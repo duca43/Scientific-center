@@ -3,6 +3,7 @@ package org.scientificcenter.security;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +20,11 @@ import java.io.IOException;
 @Slf4j
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
+    @Value("${frontend.port}")
+    private String FRONTEND_PORT;
+    @Value("${frontend.address}")
+    private String FRONTEND_ADDRESS;
+    private static final String HTTP_PREFIX = "http://";
     private final TokenUtils tokenUtils;
     private final UserDetailsService userDetailsService;
 
@@ -47,6 +53,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+//        response.setHeader("Access-Control-Allow-Origin", TokenAuthenticationFilter.HTTP_PREFIX.concat(this.FRONTEND_ADDRESS).concat(":").concat(this.FRONTEND_PORT));
+//        response.setHeader("Access-Control-Allow-Methods", "POST, PUT, GET, OPTIONS, DELETE");
+//        response.setHeader("Access-Control-Allow-Headers", "x-requested-with");
+//        response.setHeader("Access-Control-Max-Age", "3600");
+//        response.setHeader("Access-Control-Allow-Credentials", "true");
         chain.doFilter(request, response);
     }
 }

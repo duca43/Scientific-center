@@ -1,6 +1,7 @@
 package org.scientificcenter.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.modelmapper.ModelMapper;
@@ -34,17 +35,19 @@ public class UserServiceImpl implements UserService, UserDetailsService, JavaDel
     private final AuthorityService authorityService;
     private final LocationService locationService;
     private final PasswordEncoder passwordEncoder;
+    private final IdentityService identityService;
     private static final String ACCOUNT_VERIFICATION_DTO = "accountVerificationDto";
     private static final String USER_ENABLED = "user_enabled";
     private static final String ROLE_ADMINISTRATOR = "ROLE_ADMINISTRATOR";
     private static final String ROLE_EDITOR = "ROLE_EDITOR";
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final AuthorityService authorityService, final LocationService locationService, final PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(final UserRepository userRepository, final AuthorityService authorityService, final LocationService locationService, final PasswordEncoder passwordEncoder, final IdentityService identityService) {
         this.userRepository = userRepository;
         this.authorityService = authorityService;
         this.locationService = locationService;
         this.passwordEncoder = passwordEncoder;
+        this.identityService = identityService;
     }
 
     @Override
@@ -125,7 +128,15 @@ public class UserServiceImpl implements UserService, UserDetailsService, JavaDel
         user.setAuthorities(Collections.singleton(userAuthority));
 
         user = this.userRepository.save(user);
-        UserServiceImpl.log.info("Username: {}. User is saved into DB successfully", editor.getUsername());
+        UserServiceImpl.log.info("Username: {}. Editor is saved into DB successfully", editor.getUsername());
+
+        final org.camunda.bpm.engine.identity.User camundaUser = this.identityService.newUser(user.getUsername());
+        camundaUser.setPassword(editor.getPassword());
+        camundaUser.setEmail(user.getEmail());
+        camundaUser.setFirstName(user.getFirstname());
+        camundaUser.setLastName(user.getLastname());
+        this.identityService.saveUser(camundaUser);
+        UserServiceImpl.log.info("Username: {}. Camunda user is saved successfully", camundaUser.getId());
 
         return user;
     }

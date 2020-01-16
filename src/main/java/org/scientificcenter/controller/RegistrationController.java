@@ -45,13 +45,6 @@ public class RegistrationController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/verify/check/{processInstanceId}")
-    @PreAuthorize("hasRole('ROLE_GUEST')")
-    public ResponseEntity<?> checkUserActivation(@PathVariable final String processInstanceId) {
-        this.registrationService.checkUserActivation(processInstanceId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping(value = "/check_reviewer")
     @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
     public ResponseEntity<List<TaskDto>> getActiveCheckReviewerTasks() {

@@ -9,14 +9,17 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.camunda.bpm.engine.form.FormField;
 import org.camunda.bpm.engine.identity.User;
-import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.scientificcenter.dto.*;
-import org.scientificcenter.exception.*;
+import org.scientificcenter.exception.TaskNotFoundException;
+import org.scientificcenter.exception.UnauthorizedTaskAccessException;
+import org.scientificcenter.exception.UserAlreadyExistsException;
+import org.scientificcenter.exception.UserNotFoundException;
 import org.scientificcenter.security.TokenUtils;
 import org.scientificcenter.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -44,21 +47,21 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
 
     private final AuthorityService authorityService;
 
+    private final SimpMessagingTemplate simpMessagingTemplate;
+
     private final Util util;
 
     private static final String PROCESS_KEY = "User_registration";
     private static final String GUEST_USER = "anonymous";
-    private static final String USER_ALREADY_EXISTS_MESSAGE = "User_already_exists_message";
     private static final String REGISTRATION_FORM_TASK = "Registration_form_task";
     private static final String CONFIRM_REGISTRATION_TASK = "Confirm_registration_task";
     private static final String CHECK_REVIEWER_TASK = "Check_reviewer_task";
-    private static final String USER_ACTIVATED = "user_activated";
     private static final String ACCOUNT_VERIFICATION_DTO = "accountVerificationDto";
     private static final String ACCEPT_REVIEWER_FLAG = "acceptReviewer";
     private static final String ROLE_ADMINISTRATOR = "ROLE_ADMINISTRATOR";
 
     @Autowired
-    public RegistrationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final TokenUtils tokenUtils, final UserServiceImpl userService, final AuthorityService authorityService, final Util util) {
+    public RegistrationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final TokenUtils tokenUtils, final UserServiceImpl userService, final AuthorityService authorityService, final SimpMessagingTemplate simpMessagingTemplate, final Util util) {
         this.identityService = identityService;
         this.runtimeService = runtimeService;
         this.taskService = taskService;
@@ -66,6 +69,7 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
         this.tokenUtils = tokenUtils;
         this.userService = userService;
         this.authorityService = authorityService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
         this.util = util;
     }
 
@@ -105,14 +109,6 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
         final Map<String, Object> registrationFormFields = this.util.transformObjectToMap(registrationUserDto);
         this.formService.submitTaskForm(task.getId(), registrationFormFields);
         RegistrationServiceImpl.log.info("Submitted registration form with following fields: {}", registrationFormFields);
-
-        final Task messageTask = this.taskService.createTaskQuery().processInstanceId(processInstanceId).taskDefinitionKey(RegistrationServiceImpl.USER_ALREADY_EXISTS_MESSAGE).singleResult();
-
-        if (messageTask != null) {
-            RegistrationServiceImpl.log.info("User already exists");
-            this.taskService.complete(messageTask.getId());
-            throw new UserAlreadyExistsException(registrationUserDto.getUsername(), registrationUserDto.getEmail());
-        }
     }
 
     @Override
@@ -148,29 +144,6 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
         RegistrationServiceImpl.log.info("Submitted confirm registration form with following fields: {}", confirmRegistrationFields);
 
         RegistrationServiceImpl.log.info("Account verification for user with username '{}' is completed", accountVerificationDto.getUsername());
-    }
-
-    @Override
-    public void checkUserActivation(final String processInstanceId) {
-        final Execution execution = this.runtimeService.createExecutionQuery().active().executionId(processInstanceId).singleResult();
-
-        if (execution == null) return;
-
-        final boolean userActivatedFlag = (boolean) this.runtimeService.getVariable(processInstanceId, RegistrationServiceImpl.USER_ACTIVATED);
-
-        final AccountVerificationDto accountVerificationDto = (AccountVerificationDto) this.runtimeService.getVariable(processInstanceId, RegistrationServiceImpl.ACCOUNT_VERIFICATION_DTO);
-        if (!userActivatedFlag) {
-            RegistrationServiceImpl.log.info("Activation of user with username '{}' has failed", accountVerificationDto.getUsername());
-
-            final org.scientificcenter.model.User user = (org.scientificcenter.model.User) this.userService.loadUserByUsername(accountVerificationDto.getUsername());
-
-            if (user.isEnabled()) throw new UserAlreadyVerifiedException(user.getUsername());
-
-            if (!this.tokenUtils.validateToken(accountVerificationDto.getActivationCode(), user))
-                throw new InvalidActivationCodeException();
-        }
-
-        RegistrationServiceImpl.log.info("User with username '{}' can be activated because it's not activated yet", accountVerificationDto.getUsername());
     }
 
     @Override
@@ -231,10 +204,12 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
         this.identityService.saveUser(user);
         RegistrationServiceImpl.log.info("Camunda user with username '{}' is saved", registrationUserDto.getUsername());
 
-        this.userService.save(registrationUserDto);
+        final org.scientificcenter.model.User userEntity = this.userService.save(registrationUserDto);
         RegistrationServiceImpl.log.info("User entity with username '{}' is saved", registrationUserDto.getUsername());
 
         delegateExecution.setVariable("user_enabled", false);
+
+        this.simpMessagingTemplate.convertAndSend("/registration/new", userEntity);
     }
 
     private User createUser(final RegistrationUserDto registrationUserDto) {

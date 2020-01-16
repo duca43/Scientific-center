@@ -14,8 +14,6 @@ public interface RegistrationService {
 
     void confirmRegistration(AccountVerificationDto accountVerificationDto, String processInstanceId);
 
-    void checkUserActivation(String processInstanceId);
-
     List<TaskDto> getActiveCheckReviewerTasks();
 
     FormFieldsDto getCheckReviewerFormFields(String taskId);
