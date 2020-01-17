@@ -5,6 +5,9 @@ import { MagazineService } from 'src/app/services/magazine/magazine.service';
 import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
 import { Util, Authority } from 'src/app/utils';
 import { ChooseEditorsAndReviewersDialogComponent } from '../choose-editors-and-reviewers-dialog/choose-editors-and-reviewers-dialog.component';
+import *  as Stomp from 'stompjs';
+import * as SockJS from 'sockjs-client';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-editor-magazines',
@@ -16,11 +19,14 @@ export class EditorMagazinesComponent implements OnInit {
   magazines: any[];
   editor: string;
   processInstanceId: string;
+  stompClient: any;
 
   constructor(private dialog: MatDialog,
     private magazineService: MagazineService,
     private authenticationService: AuthenticationService,
-    private util: Util) { }
+    private util: Util) { 
+      this.setupStompClient();
+    }
 
   ngOnInit() {
     this.editor = this.authenticationService.getUsername();
@@ -154,5 +160,27 @@ export class EditorMagazinesComponent implements OnInit {
         this.util.showSnackBar('Error while creating magazine edit form. Please try again later.', false);
       }
     );
+  }
+
+  setupStompClient() {
+    const webSocket = new SockJS(environment.api);
+    this.stompClient = Stomp.over(webSocket);
+    const _this = this;
+    this.stompClient.connect({}, frame => {
+      _this.stompClient.subscribe("/magazine/status", 
+        (message) => {
+          const statusMessage: string = message.body;
+          console.dir(statusMessage);
+          _this.getMagazines();
+          _this.util.showSnackBar(statusMessage, true);
+        }
+      );
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.stompClient.disconnect(() => {
+      console.log('stomp client destroyed');
+    });
   }
 }

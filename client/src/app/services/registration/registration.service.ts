@@ -24,10 +24,6 @@ export class RegistrationService {
     return this.http.post('/api/registration/verify/'.concat(processInstanceId), accountVerification);
   }
 
-  checkUserActivation(processInstanceId: string) {
-    return this.http.get('/api/registration/verify/check/'.concat(processInstanceId));
-  }
-
   getActiveCheckReviewerTasks() {
     return this.http.get('/api/registration/check_reviewer');
   }

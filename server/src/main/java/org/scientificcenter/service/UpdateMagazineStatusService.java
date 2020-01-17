@@ -6,6 +6,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.scientificcenter.dto.MagazineDto;
 import org.scientificcenter.model.Magazine;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,10 +15,12 @@ public class UpdateMagazineStatusService implements JavaDelegate {
 
     private static final String MAGAZINE_DTO = "magazineDto";
     private final MagazineService magazineService;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    public UpdateMagazineStatusService(final MagazineService magazineService) {
+    public UpdateMagazineStatusService(final MagazineService magazineService, final SimpMessagingTemplate simpMessagingTemplate) {
         this.magazineService = magazineService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @Override
@@ -30,5 +33,8 @@ public class UpdateMagazineStatusService implements JavaDelegate {
         this.magazineService.save(magazine);
 
         UpdateMagazineStatusService.log.info("Magazine with issn '{}' and name '{}' need changes", magazine.getIssn(), magazine.getName());
+
+        this.simpMessagingTemplate.convertAndSend("/magazine/status",
+                "There are requested changes for magazine with issn '".concat(magazine.getIssn()).concat("'!"));
     }
 }

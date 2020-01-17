@@ -46,6 +46,6 @@ public class ApplicationConfiguration implements WebSocketMessageBrokerConfigure
     @Override
     public void configureMessageBroker(final MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app")
-                .enableSimpleBroker("/registration");
+                .enableSimpleBroker("/registration", "/magazine");
     }
 }

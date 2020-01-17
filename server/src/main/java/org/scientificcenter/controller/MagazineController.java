@@ -43,13 +43,6 @@ public class MagazineController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/check/{processInstanceId}")
-    @PreAuthorize("hasRole('ROLE_EDITOR')")
-    public ResponseEntity<?> checkMagazineCreation(@PathVariable final String processInstanceId) {
-        this.magazineCreationService.checkMagazineCreation(processInstanceId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping(value = "/editor/{editor}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     public ResponseEntity<List<MagazineDto>> getMagazinesCreatedByEditor(@PathVariable final String editor) {
@@ -84,7 +77,7 @@ public class MagazineController {
     @PostMapping(value = "/check_data")
     @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
     public ResponseEntity<?> checkMagazineData(@RequestBody final CheckMagazineDto checkMagazineDto) {
-        this.magazineCreationService.checkReviewer(checkMagazineDto);
+        this.magazineCreationService.checkMagazineData(checkMagazineDto);
         return ResponseEntity.ok().build();
     }
 }

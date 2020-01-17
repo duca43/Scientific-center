@@ -20,10 +20,6 @@ export class MagazineService {
     return this.http.post('/api/magazine/'.concat(taskId), magazine);
   }
 
-  checkMagazineCreation(processInstanceId: string) {
-    return this.http.get('/api/magazine/check/'.concat(processInstanceId));
-  }
-
   getMagazinesCreatedByEditor(editor: string) {
     return this.http.get('/api/magazine/editor/'.concat(editor));
   }

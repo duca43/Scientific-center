@@ -3,6 +3,9 @@ import { Component, Inject } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Util } from 'src/app/utils';
+import *  as Stomp from 'stompjs';
+import * as SockJS from 'sockjs-client';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-new-magazine-dialog',
@@ -16,12 +19,14 @@ export class NewMagazineDialogComponent {
   formFields: any[];
   title: string;
   form: FormGroup;
+  stompClient: Stomp.Client;
   requestProcessing = false;
 
   constructor(private dialogRef: MatDialogRef<NewMagazineDialogComponent>,
     @Inject(MAT_DIALOG_DATA) private data: any,
     private magazineService: MagazineService,
     private util: Util) { 
+      this.setupStompClient();
       this.processInstanceId = this.data.formFieldsDto.processInstanceId;
       this.taskId = this.data.formFieldsDto.taskId;
       this.formFields = this.data.formFieldsDto.formFields;
@@ -40,22 +45,37 @@ export class NewMagazineDialogComponent {
     };  
 
     this.magazineService.createMagazine(magazine, this.processInstanceId).subscribe(
-      () => {
-        
-        this.magazineService.checkMagazineCreation(this.processInstanceId).subscribe(
-          () => {
-            this.dialogRef.close(true);
-          },
-          (response) => {
-            this.util.showSnackBar(response.error.message, false);
-            this.requestProcessing = false;
-          }
-        );
-      },
+      () => { },
       (response) => {
         this.util.showSnackBar(response.error.message, false);
         this.requestProcessing = false;
       }
     );
+  }
+
+  setupStompClient() {
+    const webSocket = new SockJS(environment.api);
+    this.stompClient = Stomp.over(webSocket);
+    const _this = this;
+    this.stompClient.connect({}, frame => {
+      _this.stompClient.subscribe("/magazine/creation", 
+        (message) => {
+          const validationDto: any = JSON.parse(message.body);
+          console.dir(validationDto);
+          if (validationDto.valid) {
+            _this.dialogRef.close(true);
+          } else {
+            _this.util.showSnackBar(validationDto.errorMessage, false);
+            _this.requestProcessing = false;
+          }
+        }
+      );
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.stompClient.disconnect(() => {
+      console.log('stomp client destroyed');
+    });
   }
 }

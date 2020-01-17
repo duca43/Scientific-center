@@ -106,4 +106,10 @@ export class UsersComponent implements OnInit {
       );
     });
   }
+
+  ngOnDestroy(): void {
+    this.stompClient.disconnect(() => {
+      console.log('stomp client destroyed');
+    });
+  }
 }

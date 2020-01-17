@@ -9,6 +9,7 @@
     <div class="d-flex flex-wrap justify-content-start">
         <div class="card p-3 mat-elevation-z12 text-white bg-dark col-3 mx-3 my-2" *ngFor="let task of tasks">
             <div class="card-body px-3">
+                <p class="card-text"><b>Id:</b> {{task.id}}</p>
                 <p class="card-text"><b>Definition key:</b> {{task.taskDefinitionKey}}</p>
                 <p class="card-text"><b>Name:</b> {{task.name}}</p>
                 <p class="card-text"><b>Created time:</b> {{task.createTime | date:'medium'}}</p>
