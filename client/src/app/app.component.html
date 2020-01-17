@@ -1,0 +1,49 @@
+<nav class="nav font-weight-bold" [ngClass]="{affix: navBackground}">
+    <div class="container-fluid">
+        <div class="brand">
+            <a class="navbar-link" href=""><img src="../assets/images/logo.png" ></a>
+        </div>
+        <div class="main_list">
+            <ul>
+                <li *ngIf="username">
+                    <a class="navbar-link dropdown-toggle" id="usernameDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{username}} <i class="ml-2 fas fa-user"></i>
+                    </a>
+                    <div class="dropdown-menu bg-dark" aria-labelledby="usernameDropdown">
+                        <a class="dropdown-item bg-dark navbar-link" (click)="logout()">
+                            Logout <i class="ml-2 fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </li>
+                <li *ngIf="!username"><app-registration></app-registration></li>
+                <li *ngIf="!username"><app-login></app-login></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container-fluid">
+    <div class="row w-100 d-flex justify-content-center" style="position: absolute; z-index: 2; margin-top: 6%;">
+        <h1 class="display-3 font-weight-bold">Scientific center</h1>
+    </div>
+    <div id="carouselControls" class="row carousel slide" data-ride="carousel" style="z-index: 1;">
+        <ol class="carousel-indicators">
+            <li data-target="#carouselControls" data-slide-to="0" class="active"></li>
+            <li data-target="#carouselControls" data-slide-to="1"></li>
+            <li data-target="#carouselControls" data-slide-to="2"></li>
+        </ol>
+        <div class="carousel-inner w-100" style="height: 50vh !important;">
+            <div class="carousel-item active h-100" style='width: 100% !important; background-image: url(../assets/images/701601.jpg);'></div>
+            <div class="carousel-item w-100 h-100" style='background-image: url(../assets/images/824561.jpg);'></div>
+            <div class="carousel-item w-100 h-100" style='background-image: url(../assets/images/147574.jpg);'></div>
+        </div>
+        <a class="carousel-control-prev" href="#carouselControls" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselControls" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+</div>
+<router-outlet></router-outlet>

@@ -1,0 +1,20 @@
+<h1 mat-dialog-title>Login</h1>
+<mat-dialog-content [formGroup]="loginForm" class="fields-container">
+    <mat-form-field>
+        <input matInput type="text" formControlName="username" placeholder="Username">
+    </mat-form-field>
+    <br>
+    <mat-form-field>
+        <input matInput type="password" formControlName="password" placeholder="Password">
+        <mat-error *ngIf="loginForm.get('password').errors && loginForm.get('password').errors.loginFailed"> 
+          Invalid username and/or password.
+        </mat-error>
+    </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button color="primary" type="submit" (click)="submit()" [disabled]="loginForm.invalid || requestProcessing">
+      {{requestProcessing ? 'Logging you in...' : 'Login'}}
+    <span class="ml-2"><img src="assets/images/Spinner-1s-32px.gif" *ngIf="requestProcessing"></span>
+  </button>
+  <button mat-raised-button [mat-dialog-close] [disabled]="requestProcessing">Cancel</button>
+</mat-dialog-actions>

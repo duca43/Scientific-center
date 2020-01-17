@@ -1,0 +1,21 @@
+<div class="container-fluid">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mt-1" style="background: none !important; margin-bottom: 0 !important;">
+          <li class="breadcrumb-item"><a [routerLink]="['/']">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Check reviewer tasks</li>
+        </ol>
+    </nav>
+    <h1 class="ml-5">List of active <i>check reviewer</i> tasks</h1>
+    <div class="d-flex flex-wrap justify-content-start">
+        <div class="card p-3 mat-elevation-z12 text-white bg-dark col-3 mx-3 my-2" *ngFor="let task of tasks">
+            <div class="card-body px-3">
+                <p class="card-text"><b>Definition key:</b> {{task.taskDefinitionKey}}</p>
+                <p class="card-text"><b>Name:</b> {{task.name}}</p>
+                <p class="card-text"><b>Created time:</b> {{task.createTime | date:'medium'}}</p>
+                <div class="d-flex justify-content-center">
+                    <button mat-raised-button class="mt-1" color="primary" (click)="openCheckReviewerDialog(task)">Check reviewer <i class="ml-2 fas fa-tasks"></i></button>
+                </div>         
+            </div>
+        </div>
+    </div>
+</div>

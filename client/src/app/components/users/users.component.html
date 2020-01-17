@@ -1,0 +1,81 @@
+<div class="container-fluid">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mt-1" style="background: none !important; margin-bottom: 0 !important;">
+          <li class="breadcrumb-item"><a [routerLink]="['/']">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Users</li>
+        </ol>
+    </nav>
+    <div class="row justify-content-center">
+        <div class="col-2">
+            <div class="row justify-content-center m-3">
+                <mat-list>
+                    <h1 mat-subheader>Actions</h1>
+                    <mat-list-item>
+                        <button class="mat-elevation-z8" mat-raised-button color="primary" (click)="openNewEditorDialog()">
+                            Add new editor <i class="ml-1 fas fa-plus"></i>
+                        </button>
+                    </mat-list-item>
+                </mat-list>
+            </div>
+        </div>
+        <div class="col-10">
+            <div class="row justify-content-center mat-elevation-z12 m-3">
+                <table mat-table [dataSource]="dataSource" class="w-100" multiTemplateDataRows>
+                    <ng-container *ngFor="let column of columns;" [matColumnDef]="column.columnDef">
+                        <th mat-header-cell *matHeaderCellDef> {{ column.header }} </th>
+                        <td mat-cell *matCellDef="let row">  
+                            <span *ngIf="column.type === 'string'">
+                                {{ column.cell(row) }}
+                            </span>
+                            <span *ngIf="column.type === 'boolean'"
+                                class="badge" 
+                                [ngClass]="{'badge-success': column.cell(row), 'badge-danger': !column.cell(row)}"
+                                style="font-size: 110%;">
+                                <i *ngIf="column.cell(row)" class="fas fa-check"></i>
+                                <i *ngIf="!column.cell(row)" class="fas fa-times"></i>
+                            </span>
+                        </td>
+                    </ng-container>
+                    <ng-container matColumnDef="expandedDetails">
+                        <td mat-cell *matCellDef="let element" [attr.colspan]="columns.length">
+                          <div class="element-detail" [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
+                            <div class="card text-white bg-dark w-25 m-2" style="min-width: 25%;" *ngIf="element.location">
+                                <div class="card-header">
+                                    <h5 class="card-title">Location</h5>
+                                </div>
+                                <div class="card-body">
+                                  <p class="card-text"><b>Address:</b> {{element.location.address}}</p>
+                                  <p class="card-text"><b>City:</b> {{element.location.city}}</p>
+                                  <p class="card-text"><b>Country:</b> {{element.location.country}}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 m-2" *ngIf="element.scientificAreas && element.scientificAreas.length > 0">
+                                    <h5>Scientific areas</h5>
+                                    <mat-chip-list>
+                                    <mat-chip *ngFor="let area of element.scientificAreas" color="primary" selected>{{area.name}}</mat-chip>
+                                    </mat-chip-list>
+                                </div>
+                                <div class="col-12 m-2" *ngIf="element.authorities && element.authorities.length > 0">
+                                    <h5>User authorities</h5>
+                                    <mat-chip-list>
+                                    <mat-chip *ngFor="let item of element.authorities" color="warn" selected>{{item.authority}}</mat-chip>
+                                    </mat-chip-list>
+                                </div>
+                            </div>
+                          </div>
+                        </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let element; columns: displayedColumns;"
+                        class="element-row"
+                        [class.expanded-row]="expandedElement === element"
+                        (click)="expandedElement = expandedElement === element ? null : element">
+                    </tr>
+                    <tr mat-row *matRowDef="let element; columns: ['expandedDetails']" class="detail-row"></tr>
+                </table>
+                <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="10" showFirstLastButtons class="w-100"></mat-paginator>
+            </div>
+          </div>
+    </div>
+</div>

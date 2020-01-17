@@ -1,0 +1,46 @@
+<mat-dialog-content [formGroup]="form">
+    <mat-form-field *ngFor="let formField of formFields | formFields:false">
+        <input matInput *ngIf="formField.type.name === 'string'" type="text" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <input matInput *ngIf="formField.type.name === 'long'" type="number" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <input matInput *ngIf="formField.type.name === 'date'" type="date" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <input matInput *ngIf="formField.type.name === 'email'" type="email" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <input matInput *ngIf="formField.type.name === 'password'" type="password" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <input matInput *ngIf="formField.type.name === 'location'" type="search" [id]="formField.id" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <mat-select *ngIf="formField.type.name === 'enum' || formField.type.name.startsWith('multiple_enum_')"
+            [compareWith]="compareSelectObjects"
+            formControlName="{{formField.id}}"
+            placeholder="{{formField.label}}" 
+            [multiple]="formField.type.name !== 'enum'">
+            <mat-option *ngFor="let item of formField.type.values" [value]="item">{{item.name}}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get(formField.id).invalid &&
+        (form.get(formField.id).dirty || form.get(formField.id).touched)">
+        <div *ngIf="form.get(formField.id).errors.required"> 
+            {{formField.label}} is <b>required</b>.
+        </div>
+        <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.minlength">
+            Length of {{formField.label}} is <b>too short</b>!
+        </div>
+        <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.maxlength">
+            Length of {{formField.label}} is <b>too long</b>!
+        </div>
+        <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.min">
+            Error! Minimal value of {{formField.label}} can't be  <b>too short</b>!
+        </div>
+        <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.max">
+            Length of {{formField.label}} is <b>too short</b>!
+        </div>
+        <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.email">
+            Invalid email format!
+        </div>
+        <div *ngIf="!form.get(formField.id).errors.required &&
+            form.get(formField.id).errors.minSelection &&
+            form.get(formField.id).errors.minSelection.isError">
+            You have to select minimum {{form.get(formField.id).errors.minSelection.value}} values!
+        </div>
+        </mat-error>
+    </mat-form-field>
+    <div *ngFor="let formField of formFields| formFields:true">
+        <mat-checkbox *ngIf="formField.type.name === 'boolean'" formControlName="{{formField.id}}">{{formField.label}}</mat-checkbox>
+    </div>
+</mat-dialog-content>

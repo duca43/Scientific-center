@@ -1,0 +1,88 @@
+<div class="container-fluid">
+  <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mt-1" style="background: none !important; margin-bottom: 0 !important;">
+        <li class="breadcrumb-item"><a [routerLink]="['/']">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">My magazines</li>
+      </ol>
+  </nav>
+  <div class="row justify-content-center">
+    <div class="col-2">
+        <div class="row justify-content-center m-3">
+            <mat-list>
+                <h1 mat-subheader>Actions</h1>
+                <mat-list-item>
+                    <button class="mat-elevation-z8" mat-raised-button color="primary" (click)="openNewMagazineDialog()">
+                        Add new magazine <i class="ml-1 fas fa-plus"></i>
+                    </button>
+                </mat-list-item>
+            </mat-list>
+        </div>
+    </div>
+    <div class="col-10">
+      <div class="row justify-content-center m-3">
+        <h1>List of magazines in which you are <i>main editor</i></h1>
+      </div>
+        <div class="row d-flex flex-wrap justify-content-start">
+          <div class="card p-3 mat-elevation-z12 text-white bg-dark mx-3 my-2" style="min-width: 30%; max-width: 30%;" *ngFor="let magazine of magazines">
+              <div class="card-header">
+                  <h2 class="card-title text-center">{{magazine.name}}</h2>
+              </div>
+              <div class="card-body px-3">
+                <p class="card-text"><b>ISSN:</b> {{magazine.issn}}</p>
+                <p class="card-text"><b>Payment by:</b> {{magazine.payment == 'user' ? 'User' : 'Editor'}}</p>
+                <p class="card-text"><b>Enabled:</b>
+                  <span class="badge ml-2"
+                    [ngClass]="{'badge-success': magazine.enabled, 'badge-danger': !magazine.enabled}"
+                    style="font-size: 120%;">
+                    <i *ngIf="magazine.enabled" class="fas fa-check"></i>
+                    <i *ngIf="!magazine.enabled" class="fas fa-times"></i>
+                  </span> 
+                </p>
+                <p class="card-text"><b>Choosen editors and reviewers:</b>
+                  <span class="badge ml-2"
+                    [ngClass]="{'badge-success': magazine.chosenEditorsAndReviewers, 'badge-danger': !magazine.chosenEditorsAndReviewers}"
+                    style="font-size: 120%;">
+                    <i *ngIf="magazine.chosenEditorsAndReviewers" class="fas fa-check"></i>
+                    <i *ngIf="!magazine.chosenEditorsAndReviewers" class="fas fa-times"></i>
+                  </span> 
+                </p>
+                <p class="card-text"><b>Requested changes:</b>
+                  <span class="badge ml-2"
+                    [ngClass]="{'badge-success': magazine.requestedChanges, 'badge-danger': !magazine.requestedChanges}"
+                    style="font-size: 120%;">
+                    <i *ngIf="magazine.requestedChanges" class="fas fa-check"></i>
+                    <i *ngIf="!magazine.requestedChanges" class="fas fa-times"></i>
+                  </span> 
+                </p>
+                <div class="mb-2" style="height: 20vh; overflow-y: auto; overflow-x: hidden;">
+                  <p class="card-text">
+                    <span><b>Scientific areas:</b></span>
+                  </p>
+                  <mat-chip-list>
+                    <mat-chip *ngFor="let area of magazine.scientificAreas" color="primary" selected>{{area.name}}</mat-chip>
+                  </mat-chip-list>
+                </div>
+                <div class="row d-flex justify-content-center">
+                    <button mat-raised-button
+                      class="my-2"
+                      color="primary"
+                      (click)="openChooseEditorsAndReviewersDialog(magazine)"
+                      [disabled]="magazine.chosenEditorsAndReviewers">
+                      Check editors and reviewers 
+                      <i class="ml-2 fas fa-newspaper"></i>
+                    </button>
+                    <button mat-raised-button
+                      class="my-2"
+                      color="primary"
+                      (click)="openEditMagazineDialog(magazine)"
+                      [disabled]="!magazine.requestedChanges">
+                      Edit magazine
+                      <i class="ml-2 fas fa-edit"></i>
+                    </button>
+                </div>         
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+  
+  tr.detail-row {
+    height: 0;
+  }
+  
+  tr.element-row:not(.expanded-row):hover {
+    background: #777;
+  }
+  
+  .element-row td {
+    cursor: pointer;
+    border-bottom-width: 0;
+  }
+  
+  .element-detail {
+    overflow: hidden;
+    display: flex;
+  }
