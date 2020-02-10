@@ -1,10 +1,7 @@
 package org.scientificcenter.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.camunda.bpm.engine.FormService;
-import org.camunda.bpm.engine.IdentityService;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.camunda.bpm.engine.form.FormField;
@@ -43,6 +40,8 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
 
     private final FormService formService;
 
+    private final HistoryService historyService;
+
     private final TokenUtils tokenUtils;
 
     private final UserServiceImpl userService;
@@ -63,11 +62,12 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
     private static final String ROLE_ADMINISTRATOR = "ROLE_ADMINISTRATOR";
 
     @Autowired
-    public RegistrationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final TokenUtils tokenUtils, final UserServiceImpl userService, final AuthorityService authorityService, final SimpMessagingTemplate simpMessagingTemplate, final Util util) {
+    public RegistrationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final HistoryService historyService, final TokenUtils tokenUtils, final UserServiceImpl userService, final AuthorityService authorityService, final SimpMessagingTemplate simpMessagingTemplate, final Util util) {
         this.identityService = identityService;
         this.runtimeService = runtimeService;
         this.taskService = taskService;
         this.formService = formService;
+        this.historyService = historyService;
         this.tokenUtils = tokenUtils;
         this.userService = userService;
         this.authorityService = authorityService;
@@ -79,17 +79,21 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
     public FormFieldsDto beginRegistrationProcess() {
         this.identityService.setAuthenticatedUserId(RegistrationServiceImpl.GUEST_USER);
         final ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey(RegistrationServiceImpl.PROCESS_KEY);
-        RegistrationServiceImpl.log.info("Process instance with id '{}' is created.", processInstance.getId());
+        log.info("Process instance with id '{}' is created.", processInstance.getId());
+        return this.createRegistrationFormTask(processInstance.getId());
+    }
 
-        final Task task = this.util.getActiveUserTaskByDefinitionKey(processInstance.getId(), RegistrationServiceImpl.REGISTRATION_FORM_TASK);
-        RegistrationServiceImpl.log.info("Registration form task is created. Assignee: '{}'.", task.getAssignee());
+    @Override
+    public FormFieldsDto createRegistrationFormTask(final String processInstanceId) {
+        final Task task = this.util.getActiveUserTaskByDefinitionKey(processInstanceId, RegistrationServiceImpl.REGISTRATION_FORM_TASK);
+        log.info("Registration form task is created. Assignee: '{}'.", task.getAssignee());
 
         final List<FormField> formFields = this.formService.getTaskFormData(task.getId()).getFormFields();
 
         final String token = this.tokenUtils.generateToken(RegistrationServiceImpl.GUEST_USER);
 
         return FormFieldsDto.builder()
-                .processInstanceId(processInstance.getId())
+                .processInstanceId(processInstanceId)
                 .taskId(task.getId())
                 .formFields(formFields)
                 .token(token)
@@ -144,7 +148,6 @@ public class RegistrationServiceImpl implements RegistrationService, JavaDelegat
         final Map<String, Object> confirmRegistrationFields = this.util.transformObjectToMap(accountVerificationDto);
         this.formService.submitTaskForm(task.getId(), confirmRegistrationFields);
         RegistrationServiceImpl.log.info("Submitted confirm registration form with following fields: {}", confirmRegistrationFields);
-
         RegistrationServiceImpl.log.info("Account verification for user with username '{}' is completed", accountVerificationDto.getUsername());
     }
 

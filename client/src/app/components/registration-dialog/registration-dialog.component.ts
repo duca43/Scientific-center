@@ -4,7 +4,7 @@ import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { RegistrationService } from 'src/app/services/registration/registration.service';
 import { Util } from 'src/app/utils';
-import *  as Stomp from 'stompjs';
+import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 
 @Component({
@@ -48,9 +48,13 @@ export class RegistrationDialogComponent implements AfterViewInit, OnDestroy {
 
     this.registrationService.registerUser(user, this.processInstanceId).subscribe(
       () => { },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
         this.requestProcessing = false;
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     ); 
   }

@@ -12,6 +12,9 @@ import { Util } from 'src/app/utils';
 export class CheckMagazineDataTasksComponent implements OnInit {
 
   tasks: any[];
+  currentPage = 'Check magazine data tasks';
+  taskName = 'check magazine data';
+  buttonName = 'Check magazine';
 
   constructor(private dialog: MatDialog,
     private magazineService: MagazineService,
@@ -21,15 +24,22 @@ export class CheckMagazineDataTasksComponent implements OnInit {
     this.getTasks();
   }
 
-  private getTasks() {
-    this.magazineService.getActiveCheckMagazineDataTasks().subscribe((tasks: any[]) => {
-      this.tasks = this.util.sortArray(tasks, 'createTime', true);
-    }, (response) => {
-      this.util.showSnackBar(response.error.message, false);
-    });
+  getTasks() {
+    this.magazineService.getActiveCheckMagazineDataTasks().subscribe(
+      (tasks: any[]) => {
+        this.tasks = this.util.sortArray(tasks, 'createTime', true);
+      },
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
+      }
+    );
   }
 
-  openCheckMagazineDataDialog(task) {
+  openDialog(task) {
     this.magazineService.getCheckMagazineDataFormFields(task.id).subscribe(
       (formFieldsDto: any) => {
 
@@ -55,8 +65,12 @@ export class CheckMagazineDataTasksComponent implements OnInit {
           }
         );
       },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }

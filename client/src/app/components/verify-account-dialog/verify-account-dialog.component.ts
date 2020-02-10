@@ -1,8 +1,8 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnDestroy } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { RegistrationService } from 'src/app/services/registration/registration.service';
 import { Util } from 'src/app/utils';
-import *  as Stomp from 'stompjs';
+import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 import { environment } from 'src/environments/environment';
 
@@ -11,7 +11,7 @@ import { environment } from 'src/environments/environment';
   templateUrl: './verify-account-dialog.component.html',
   styleUrls: ['./verify-account-dialog.component.css']
 })
-export class VerifyAccountDialogComponent {
+export class VerifyAccountDialogComponent implements OnDestroy {
   
   username: any;
   processInstanceId: any;
@@ -38,9 +38,13 @@ export class VerifyAccountDialogComponent {
 
       this.registrationService.confirmRegistration(accountVerification, this.processInstanceId).subscribe(
         () => { },
-        (response) => {
-          this.util.showSnackBar(response.error.message, false);
+        (response: any) => {
           this.requestProcessing = false;
+          if (response && response.error) {
+            this.util.showSnackBar(response.error.message, false);
+          } else {
+            this.util.showSnackBar('Unexpected error! Please, try again later', false);
+          }
         }
       );
     }
@@ -53,7 +57,6 @@ export class VerifyAccountDialogComponent {
         _this.stompClient.subscribe("/registration/verification", 
           (message) => {
             const validationDto: any = JSON.parse(message.body);
-            console.dir(validationDto);
             if (validationDto.valid) {
               _this.dialogRef.close(true);
             } else {
@@ -63,5 +66,11 @@ export class VerifyAccountDialogComponent {
           }
         );
       });
-    }
+  }
+
+  ngOnDestroy(): void {
+    this.stompClient.disconnect(() => {
+      console.log('stomp client destroyed');
+    });
+  }
 }

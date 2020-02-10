@@ -48,10 +48,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/socket/**", "/api/registration/**", "/api/magazine/**")
+                .antMatchers("/socket/**", "/api/registration/**", "/api/magazine/**", "/api/scientific_paper/**", "/api/users/**")
                 .permitAll()
-                .antMatchers("/api/users/**", "/api/scientific_areas/**")
+                .antMatchers("/api/scientific_areas/**")
                 .hasAuthority("ROLE_ADMINISTRATOR")
+                .antMatchers("/api/payment/**")
+                .hasAnyAuthority("ROLE_USER", "ROLE_EDITOR", "ROLE_REVIEWER")
+                .antMatchers("/api/files/**")
+                .hasAnyAuthority("ROLE_EDITOR", "ROLE_REVIEWER")
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(this.tokenAuthenticationFilter, BasicAuthenticationFilter.class);
@@ -63,5 +67,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(final WebSecurity web) {
         web.ignoring().antMatchers(HttpMethod.POST, "/api/login");
         web.ignoring().antMatchers(HttpMethod.GET, "/", "/webjars/**", "/*.html", "/favicon.ico", "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.jpg", "/**/*.png", "/**/*.gif");
+        web.ignoring().antMatchers("/v2/api-docs", "/configuration/ui", "/swagger-resources/**", "/configuration/security");
     }
 }

@@ -40,7 +40,7 @@ public class RegistrationController {
 
     @PostMapping(value = "/verify/{processInstanceId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_GUEST')")
-    public ResponseEntity<FormFieldsDto> confirmRegistration(@RequestBody final AccountVerificationDto accountVerificationDto, @PathVariable final String processInstanceId) {
+    public ResponseEntity<?> confirmRegistration(@RequestBody final AccountVerificationDto accountVerificationDto, @PathVariable final String processInstanceId) {
         this.registrationService.confirmRegistration(accountVerificationDto, processInstanceId);
         return ResponseEntity.ok().build();
     }

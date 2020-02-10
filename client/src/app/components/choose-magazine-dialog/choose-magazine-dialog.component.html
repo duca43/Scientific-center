@@ -1,0 +1,11 @@
+<div class="container-fluid">
+    <h1 mat-dialog-title>Please choose magazine you want to add your scientific paper into</h1>
+    <app-generic-form [form]="form" [formFields]="formFields"></app-generic-form>
+    <mat-dialog-actions>
+      <button mat-raised-button color="primary" type="submit" (click)="submit()" [disabled]="form.invalid || requestProcessing">
+          {{requestProcessing ? 'Confirming...' : 'Confirm'}}
+          <span class="ml-2"><img src="assets/images/Spinner-1s-32px.gif" *ngIf="requestProcessing"></span>
+      </button>
+      <button mat-raised-button [mat-dialog-close] [disabled]="requestProcessing">Cancel</button>
+  </mat-dialog-actions> 
+</div>

@@ -37,9 +37,13 @@ export class CheckReviewerDialogComponent {
       () => {
         this.dialogRef.close(true);
       },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
         this.requestProcessing = false;
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }

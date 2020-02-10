@@ -24,4 +24,9 @@ public class ScientificAreasServiceImpl implements ScientificAreasService {
     public List<ScientificArea> findAll() {
         return this.scientificAreaRepository.findAll();
     }
+
+    @Override
+    public ScientificArea findById(final Long id) {
+        return this.scientificAreaRepository.findById(id).orElse(null);
+    }
 }

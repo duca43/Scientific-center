@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import { Util } from 'src/app/utils';
 import { MatDialog } from '@angular/material';
 import { RegistrationService } from 'src/app/services/registration/registration.service';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
 
 @Component({
   selector: 'app-check-reviewer-tasks',
@@ -13,6 +12,9 @@ import { AuthenticationService } from 'src/app/services/authentication/authentic
 export class CheckReviewerTasksComponent implements OnInit {
 
   tasks: any[];
+  currentPage = 'Check reviewer tasks';
+  taskName = 'check reviewer';
+  buttonName = 'Check reviewer';
 
   constructor(private dialog: MatDialog,
     private registrationService: RegistrationService,
@@ -22,15 +24,22 @@ export class CheckReviewerTasksComponent implements OnInit {
     this.getTasks();
   }
 
-  private getTasks() {
-    this.registrationService.getActiveCheckReviewerTasks().subscribe((tasks: any[]) => {
-      this.tasks = this.util.sortArray(tasks, 'createTime', true);
-    }, (response) => {
-      this.util.showSnackBar(response.error.message, false);
-    });
+  getTasks() {
+    this.registrationService.getActiveCheckReviewerTasks().subscribe(
+      (tasks: any[]) => {
+        this.tasks = this.util.sortArray(tasks, 'createTime', true);
+      },
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
+      }
+    );
   }
 
-  openCheckReviewerDialog(task) {
+  openDialog(task) {
     this.registrationService.getCheckReviewerFormFields(task.id).subscribe(
       (formFieldsDto: any) => {
 
@@ -56,8 +65,12 @@ export class CheckReviewerTasksComponent implements OnInit {
           }
         );
       },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }

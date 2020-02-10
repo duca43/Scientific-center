@@ -10,6 +10,11 @@
                         {{username}} <i class="ml-2 fas fa-user"></i>
                     </a>
                     <div class="dropdown-menu bg-dark" aria-labelledby="usernameDropdown">
+                        <a class="dropdown-item bg-dark navbar-link" [routerLink]="['/my_profile']" 
+                        *ngIf="roles && roles.includes('ROLE_USER')">
+                            My profile <i class="ml-2 fas fa-id-card"></i>
+                        </a>
+                        <div class="dropdown-divider" *ngIf="roles && roles.includes('ROLE_USER')"></div>
                         <a class="dropdown-item bg-dark navbar-link" (click)="logout()">
                             Logout <i class="ml-2 fas fa-sign-out-alt"></i>
                         </a>

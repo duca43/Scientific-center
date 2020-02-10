@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/pink-bluegrey.css';
 @import "~bootstrap/dist/css/bootstrap.css";
+@import "@fortawesome/fontawesome-free/css/all.css";
 
 @import url('https://fonts.googleapis.com/css?family=Quicksand:400,500,700');
 html,

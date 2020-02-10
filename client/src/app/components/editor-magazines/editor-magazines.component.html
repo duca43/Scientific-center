@@ -22,14 +22,18 @@
       <div class="row justify-content-center m-3">
         <h1>List of magazines in which you are <i>main editor</i></h1>
       </div>
-        <div class="row d-flex flex-wrap justify-content-start">
-          <div class="card p-3 mat-elevation-z12 text-white bg-dark mx-3 my-2" style="min-width: 30%; max-width: 30%;" *ngFor="let magazine of magazines">
-              <div class="card-header">
-                  <h2 class="card-title text-center">{{magazine.name}}</h2>
-              </div>
-              <div class="card-body px-3">
-                <p class="card-text"><b>ISSN:</b> {{magazine.issn}}</p>
-                <p class="card-text"><b>Payment by:</b> {{magazine.payment == 'user' ? 'User' : 'Editor'}}</p>
+      <div class="row d-flex flex-wrap justify-content-center">
+        <div class="card p-3 mat-elevation-z12 text-white bg-dark m-3 w-75" *ngFor="let magazine of magazines">
+            <div class="card-header">
+                <h2 class="card-title text-center">{{magazine.name}}</h2>
+            </div>
+            <div class="card-body px-3">
+              <div class="row">
+                <div class="col-6">
+                  <p class="card-text"><b>ISSN:</b> {{magazine.issn}}</p>
+                <p class="card-text"><b>Payment by:</b> {{magazine.payment == 'reader' ? 'Reader' : 'Author'}}</p>
+                <p class="card-text" *ngIf="magazine.payment == 'author'"><b>Membership price:</b> {{magazine.membershipPrice}}</p>
+                <p class="card-text" *ngIf="magazine.payment == 'author'"><b>Membership currency:</b> {{magazine.membershipCurrency}}</p>
                 <p class="card-text"><b>Enabled:</b>
                   <span class="badge ml-2"
                     [ngClass]="{'badge-success': magazine.enabled, 'badge-danger': !magazine.enabled}"
@@ -38,7 +42,15 @@
                     <i *ngIf="!magazine.enabled" class="fas fa-times"></i>
                   </span> 
                 </p>
-                <p class="card-text"><b>Choosen editors and reviewers:</b>
+                <p class="card-text" *ngIf="magazine.enabled"><b>Registered for payments:</b>
+                  <span class="badge ml-2"
+                    [ngClass]="{'badge-success': magazine.enabledAsMerchant, 'badge-danger': !magazine.enabledAsMerchant}"
+                    style="font-size: 120%;">
+                    <i *ngIf="magazine.enabledAsMerchant" class="fas fa-check"></i>
+                    <i *ngIf="!magazine.enabledAsMerchant" class="fas fa-times"></i>
+                  </span>
+                </p>
+                <p class="card-text" *ngIf="!magazine.enabled"><b>Choosen editors and reviewers:</b>
                   <span class="badge ml-2"
                     [ngClass]="{'badge-success': magazine.chosenEditorsAndReviewers, 'badge-danger': !magazine.chosenEditorsAndReviewers}"
                     style="font-size: 120%;">
@@ -46,7 +58,7 @@
                     <i *ngIf="!magazine.chosenEditorsAndReviewers" class="fas fa-times"></i>
                   </span> 
                 </p>
-                <p class="card-text"><b>Requested changes:</b>
+                <p class="card-text" *ngIf="!magazine.enabled"><b>Requested changes:</b>
                   <span class="badge ml-2"
                     [ngClass]="{'badge-success': magazine.requestedChanges, 'badge-danger': !magazine.requestedChanges}"
                     style="font-size: 120%;">
@@ -54,35 +66,57 @@
                     <i *ngIf="!magazine.requestedChanges" class="fas fa-times"></i>
                   </span> 
                 </p>
-                <div class="mb-2" style="height: 20vh; overflow-y: auto; overflow-x: hidden;">
-                  <p class="card-text">
-                    <span><b>Scientific areas:</b></span>
-                  </p>
-                  <mat-chip-list>
-                    <mat-chip *ngFor="let area of magazine.scientificAreas" color="primary" selected>{{area.name}}</mat-chip>
-                  </mat-chip-list>
                 </div>
-                <div class="row d-flex justify-content-center">
-                    <button mat-raised-button
-                      class="my-2"
-                      color="primary"
-                      (click)="openChooseEditorsAndReviewersDialog(magazine)"
-                      [disabled]="magazine.chosenEditorsAndReviewers">
-                      Check editors and reviewers 
-                      <i class="ml-2 fas fa-newspaper"></i>
-                    </button>
-                    <button mat-raised-button
-                      class="my-2"
-                      color="primary"
-                      (click)="openEditMagazineDialog(magazine)"
-                      [disabled]="!magazine.requestedChanges">
-                      Edit magazine
-                      <i class="ml-2 fas fa-edit"></i>
-                    </button>
-                </div>         
-            </div>
+                <div class="col-6">
+                  <div class="mb-2" style="height: 25vh; overflow-y: auto; overflow-x: hidden;">
+                    <p class="card-text">
+                      <span><b>Scientific areas:</b></span>
+                    </p>
+                    <mat-chip-list>
+                      <mat-chip *ngFor="let area of magazine.scientificAreas" color="primary" selected>{{area.name}}</mat-chip>
+                    </mat-chip-list>
+                  </div>
+                </div>
+              </div>
+              <div class="row d-flex justify-content-center mt-2">
+                  <button mat-raised-button
+                    class="m-2"
+                    color="primary"
+                    (click)="openSetMembershipPriceDialog(magazine)"
+                    *ngIf="magazine.payment == 'author' && !magazine.membershipPrice">
+                      Set membership price
+                    <i class="ml-2 fas fa-dollar-sign"></i>
+                  </button>
+                  <button mat-raised-button
+                    class="m-2"
+                    color="primary"
+                    (click)="openChooseEditorsAndReviewersDialog(magazine)"
+                    [disabled]="magazine.chosenEditorsAndReviewers"
+                    *ngIf="!magazine.enabled && magazine.payment == 'reader' || magazine.membershipPrice">
+                    Choose editors and reviewers 
+                    <i class="ml-2 fas fa-newspaper"></i>
+                  </button>
+                  <button mat-raised-button
+                    class="m-2"
+                    color="primary"
+                    (click)="openEditMagazineDialog(magazine)"
+                    [disabled]="!magazine.requestedChanges"
+                    *ngIf="!magazine.enabled">
+                    Edit magazine
+                    <i class="ml-2 fas fa-edit"></i>
+                  </button>
+                  <button mat-raised-button
+                    class="m-2"
+                    color="primary"
+                    (click)="registerMagazineAsMerchant(magazine)"
+                    *ngIf="magazine.enabled && !magazine.enabledAsMerchant">
+                    Register for payments
+                    <i class="ml-2 far fa-credit-card"></i>
+                  </button>
+              </div>         
           </div>
         </div>
+      </div>
     </div>
   </div>
 </div>

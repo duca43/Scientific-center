@@ -24,6 +24,14 @@ export class MagazineService {
     return this.http.get('/api/magazine/editor/'.concat(editor));
   }
 
+  getSetMembershipPriceFormFields(issn: string, editor: string) {
+    return this.http.get('/api/magazine/membership_price/'.concat(issn).concat('/').concat(editor));
+  }
+  
+  setMembershipPrice(membershipPriceDto: any, taskId: string) {
+    return this.http.post('/api/magazine/membership_price/'.concat(taskId), membershipPriceDto);
+  }
+
   getChooseEditorsAndReviewersFormFields(issn: string, editor: string) {
     return this.http.get('/api/magazine/choose_editors_and_reviewers/'.concat(issn).concat('/').concat(editor));
   }
@@ -42,5 +50,13 @@ export class MagazineService {
 
   checkMagazineData(checkMagazineDto: any) {
     return this.http.post('/api/magazine/check_data', checkMagazineDto);
+  }
+
+  registerMagazineAsMerchant(magazineRegistrationDto: any) {
+    return this.http.post('/api/magazine/register_as_merchant', magazineRegistrationDto);
+  }
+
+  completeMagazineRegistration(magazineCompleteRegistrationDto: any) {
+    return this.http.post('/api/magazine/register_as_merchant/complete', magazineCompleteRegistrationDto);
   }
 }

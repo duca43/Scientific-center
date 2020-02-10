@@ -10,6 +10,10 @@ public interface MagazineCreationService {
 
     void createMagazine(MagazineDto magazineDto, String processInstanceId);
 
+    FormFieldsDto getSetMembershipPriceFormFields(String issn, String editor);
+
+    void setMembershipPrice(MembershipPriceDto membershipPriceDto, String taskId);
+
     FormFieldsDto getChooseEditorsAndReviewersFormFields(String issn, String editor);
 
     void chooseEditorsAndReviewers(EditorsAndReviewersDto editorsAndReviewersDto, String taskId);

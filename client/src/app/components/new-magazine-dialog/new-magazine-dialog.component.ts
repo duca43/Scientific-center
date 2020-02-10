@@ -1,9 +1,9 @@
 import { MagazineService } from './../../services/magazine/magazine.service';
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Util } from 'src/app/utils';
-import *  as Stomp from 'stompjs';
+import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 import { environment } from 'src/environments/environment';
 
@@ -12,7 +12,7 @@ import { environment } from 'src/environments/environment';
   templateUrl: './new-magazine-dialog.component.html',
   styleUrls: ['./new-magazine-dialog.component.css']
 })
-export class NewMagazineDialogComponent {
+export class NewMagazineDialogComponent implements OnDestroy {
 
   processInstanceId: string;
   taskId: string;
@@ -32,7 +32,7 @@ export class NewMagazineDialogComponent {
       this.formFields = this.data.formFieldsDto.formFields;
       this.title = this.data.title;
       this.form = this.data.form;
-    }
+  }
 
   submit() {
     this.requestProcessing = true;
@@ -46,9 +46,13 @@ export class NewMagazineDialogComponent {
 
     this.magazineService.createMagazine(magazine, this.processInstanceId).subscribe(
       () => { },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
         this.requestProcessing = false;
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }

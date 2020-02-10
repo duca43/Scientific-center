@@ -5,12 +5,17 @@ import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.scientificcenter.dto.AccountVerificationDto;
+import org.scientificcenter.dto.RegistrationSubProcessResponseDto;
 import org.scientificcenter.model.Authority;
+import org.scientificcenter.security.TokenUtils;
+import org.scientificcenter.security.UserState;
 import org.scientificcenter.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +26,8 @@ public class UpdateUserRoleService implements JavaDelegate {
     private final IdentityService identityService;
     private final UserServiceImpl userService;
     private final AuthorityService authorityService;
+    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final TokenUtils tokenUtils;
     private static final String REVIEWERS_GROUP_ID = "reviewers";
     private static final String USERS_GROUP_ID = "users";
     private static final String REVIEWER_FLAG = "reviewer";
@@ -30,10 +37,12 @@ public class UpdateUserRoleService implements JavaDelegate {
     private static final String ROLE_USER = "ROLE_USER";
 
     @Autowired
-    public UpdateUserRoleService(final IdentityService identityService, final UserServiceImpl userService, final AuthorityService authorityService) {
+    public UpdateUserRoleService(final IdentityService identityService, final UserServiceImpl userService, final AuthorityService authorityService, final SimpMessagingTemplate simpMessagingTemplate, final TokenUtils tokenUtils) {
         this.identityService = identityService;
         this.userService = userService;
         this.authorityService = authorityService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
+        this.tokenUtils = tokenUtils;
     }
 
     @Override
@@ -63,8 +72,24 @@ public class UpdateUserRoleService implements JavaDelegate {
         }
 
         user.setAuthorities(authorities);
-        UpdateUserRoleService.log.info("User entity with username: {} has gained following authorities: {}",
-                accountVerificationDto.getUsername(),
-                authorities.stream().map(Authority::getAuthority).collect(Collectors.toList()));
+        final List<String> authoritiesList = authorities.stream().map(Authority::getAuthority).collect(Collectors.toList());
+        log.info("User entity with username: {} has gained following authorities: {}", accountVerificationDto.getUsername(), authoritiesList);
+
+        final DelegateExecution superExecution = delegateExecution.getSuperExecution();
+        if (superExecution != null) {
+            log.info("Registration is completed as a sub process");
+            superExecution.setVariable("registration_completed", true);
+            superExecution.setVariable("author", user.getUsername());
+            final UserState userState = UserState.builder()
+                    .username(user.getUsername())
+                    .token(this.tokenUtils.generateToken(user.getUsername()))
+                    .roles(authoritiesList)
+                    .build();
+            final RegistrationSubProcessResponseDto registrationSubProcessResponseDto = RegistrationSubProcessResponseDto.builder()
+                    .superProcessInstanceId(superExecution.getProcessInstanceId())
+                    .userState(userState)
+                    .build();
+            this.simpMessagingTemplate.convertAndSend("/registration/completed", registrationSubProcessResponseDto);
+        }
     }
 }

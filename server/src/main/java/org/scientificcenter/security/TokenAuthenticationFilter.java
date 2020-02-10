@@ -37,16 +37,16 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     public void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
         final String authToken = this.tokenUtils.getToken(request);
-        TokenAuthenticationFilter.log.info("Authentication token: {}", authToken);
+//        TokenAuthenticationFilter.log.info("Authentication token: {}", authToken);
         if (authToken != null) {
             final String username = this.tokenUtils.getUsernameFromToken(authToken);
 
             if (username != null) {
-                TokenAuthenticationFilter.log.info("User to be authenticated: {}", username);
+//                TokenAuthenticationFilter.log.info("User to be authenticated: {}", username);
                 final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
                 if (this.tokenUtils.validateToken(authToken, userDetails)) {
-                    TokenAuthenticationFilter.log.info("Token is valid against authenticated user");
+//                    TokenAuthenticationFilter.log.info("Token is valid against authenticated user");
                     final TokenBasedAuthentication authentication = new TokenBasedAuthentication(authToken, userDetails);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }

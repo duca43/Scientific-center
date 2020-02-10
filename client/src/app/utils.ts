@@ -1,11 +1,16 @@
+import { FilesService } from './services/files/files.service';
 import { MatSnackBar } from '@angular/material';
 import { NgModule } from '@angular/core';
 import { FormGroup, FormControl, Validators, ValidatorFn, ValidationErrors } from '@angular/forms';
+import { FileUploader, FileLikeObject, FileItem } from 'ng2-file-upload';
+import { AuthenticationService } from './services/authentication/authentication.service';
 
 @NgModule()
 export class Util {
 
-    constructor(private snackBar: MatSnackBar) { }
+    constructor(private snackBar: MatSnackBar,
+      private authenticationService: AuthenticationService,
+      private filesService: FilesService) { }
 
     showSnackBar(message: string, success: boolean) {
         if (!message) {
@@ -20,6 +25,7 @@ export class Util {
     }
 
     createGenericForm(formFields: any[]): FormGroup {
+        console.dir(formFields);
         const form = new FormGroup({});
         formFields.forEach(formField => {
           const control = new FormControl;
@@ -47,8 +53,23 @@ export class Util {
           const type: string = formField.type.name;
           if (type === 'email') {
             formValidations.push(Validators.email);
+          } else if(type === 'string_list') {
+            formField.type.values = new Array<String>();
           } else if(type === 'boolean') {
             control.setValue(false);
+          } else if(type === 'file_upload') {
+            const accessToken: string = this.authenticationService.getAccessToken();
+            formField.uploader = new FileUploader({authToken: 'Bearer ' + accessToken, autoUpload: false, allowedFileType: ['pdf']});
+            formField.uploader.onWhenAddingFileFailed = (item, filter) => this.onWhenAddingFileFailed(item, filter);
+            formField.uploader.onAfterAddingFile = (fileItem) => this.onAfterAddingFile(fileItem);
+            formField.isDropOver = false;
+          } else if(type === 'file_view') {
+            console.dir(formField.value.value);
+            this.filesService.download(formField.value.value).subscribe(
+              (blob: Blob) => {
+                formField.file = blob;
+              }
+            )
           } else if(type === 'enum' || type.startsWith('multiple_enum_') && !Array.isArray(formField.type.values)) {
             let values = [];
             Object.keys(formField.type.values).forEach(key => {
@@ -69,6 +90,16 @@ export class Util {
 
         return form;
     }
+
+    private onAfterAddingFile(fileItem: FileItem): any {
+      this.showSnackBar('File named \''.concat(fileItem.file.name).concat('\' added successfully!'), true);
+    };
+
+    private onWhenAddingFileFailed(item: FileLikeObject, filter: any): any {
+      if (filter.name === 'fileType') {
+        this.showSnackBar('File named \''.concat(item.name).concat('\' is not in PDF format!'), false);
+      }
+    };
 
     sortArray(array: any, sortBy: string, asc: boolean) {
       if (!Array.isArray(array) || array.length === 0) {
@@ -95,6 +126,7 @@ export class Util {
     initLocations(formFields: any[]) {
       formFields.forEach(formField => {
         if (formField.type.name === 'location') {
+          console.log('Create location autocomplete field for form field with id \''.concat(formField.id).concat('\''));
           const places = require('places.js');
           const placesAutocomplete = places({
             appId: 'pl14EZX3IQNN',
@@ -142,4 +174,13 @@ export function minSelection(controlName: string, minSelection: number): Validat
           control.setErrors(null);
       }
   };
+}
+
+export enum HttpStatus {
+  OK = 200,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  CONFLICT = 409
 }

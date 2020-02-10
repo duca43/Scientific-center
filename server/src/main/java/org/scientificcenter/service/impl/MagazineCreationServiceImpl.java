@@ -58,15 +58,17 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
 
     private final Util util;
 
-    private final ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper;
 
     private static final String PROCESS_KEY = "Magazine_creation";
     private static final String ROLE_EDITOR = "ROLE_EDITOR";
     private static final String ROLE_ADMINISTRATOR = "ROLE_ADMINISTRATOR";
     private static final String MAGAZINE_FORM_TASK = "Magazine_form_task";
+    private static final String SET_MEMBERSHIP_PRICE_TASK = "Set_membership_price_task";
     private static final String CHOOSE_EDITORS_AND_REVIEWERS_TASK = "Choose_editors_and_reviewers_task";
     private static final String MAGAZINE_SAVED = "magazine_saved";
     private static final String MAGAZINE_DTO = "magazineDto";
+    private static final String MEMBERSHIP_PRICE_DTO = "membershipPriceDto";
     private static final String USER_INITIATOR = "user_initiator";
     private static final String EDITORS_AND_REVIEWERS_DTO = "editorsAndReviewersDto";
     private static final String CHECK_MAGAZINE_DATA_TASK = "Check_magazine_data_task";
@@ -77,7 +79,7 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
     private static final String ROLE_REVIEWER = "ROLE_REVIEWER";
 
     @Autowired
-    public MagazineCreationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final UserService userService, final AuthorityService authorityService, final MagazineService magazineService, final Util util, final SimpMessagingTemplate simpMessagingTemplate) {
+    public MagazineCreationServiceImpl(final IdentityService identityService, final RuntimeService runtimeService, final TaskService taskService, final FormService formService, final UserService userService, final AuthorityService authorityService, final MagazineService magazineService, final Util util, final SimpMessagingTemplate simpMessagingTemplate, final ModelMapper modelMapper) {
         this.identityService = identityService;
         this.runtimeService = runtimeService;
         this.taskService = taskService;
@@ -87,6 +89,7 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
         this.magazineService = magazineService;
         this.util = util;
         this.simpMessagingTemplate = simpMessagingTemplate;
+        this.modelMapper = modelMapper;
     }
 
     @Override
@@ -142,7 +145,63 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
     }
 
     @Override
+    public FormFieldsDto getSetMembershipPriceFormFields(final String issn, final String editor) {
+        Assert.notNull(issn, "Magazine issn can't be null!");
+        Assert.notNull(editor, "Editor username can't be null!");
+
+        final String processInstanceId = this.getProcessInstanceId(issn, editor);
+
+        final Task task = this.util.getActiveUserTaskByDefinitionKey(processInstanceId, SET_MEMBERSHIP_PRICE_TASK);
+
+        if (task == null)
+            throw new TaskNotFoundException(SET_MEMBERSHIP_PRICE_TASK);
+
+        if (!task.getAssignee().equals(editor))
+            throw new UnauthorizedTaskAccessException(editor, task.getId());
+
+        log.info("Retrieved set membership price task");
+
+        final List<FormField> formFields = this.formService.getTaskFormData(task.getId()).getFormFields();
+
+        return FormFieldsDto.builder()
+                .processInstanceId(processInstanceId)
+                .taskId(task.getId())
+                .formFields(formFields)
+                .build();
+    }
+
+    @Override
+    public void setMembershipPrice(final MembershipPriceDto membershipPriceDto, final String taskId) {
+        Assert.notNull(membershipPriceDto, "Membership price object can't be null!");
+        Assert.notNull(membershipPriceDto.getIssn(), "Magazine issn can't be null!");
+        Assert.notNull(membershipPriceDto.getPrice(), "Membership price can't be null!");
+
+        log.info("Setting membership price for magazine with issn '{}'", membershipPriceDto.getIssn());
+
+        final Task task = this.taskService.createTaskQuery().taskId(taskId).singleResult();
+        log.info("Retrieved set membership price task");
+
+        if (task == null)
+            throw new TaskNotFoundException(SET_MEMBERSHIP_PRICE_TASK);
+
+        this.runtimeService.setVariable(task.getProcessInstanceId(), MEMBERSHIP_PRICE_DTO, membershipPriceDto);
+        log.info("Set execution variable 'membershipPriceDto' -> {}", membershipPriceDto);
+
+        final Map<String, Object> settingMembershipPriceFormFields = this.util.transformObjectToMap(membershipPriceDto);
+        this.formService.submitTaskForm(task.getId(), settingMembershipPriceFormFields);
+        log.info("Submitted membership price form with following fields: {}", settingMembershipPriceFormFields);
+    }
+
+    @Override
     public FormFieldsDto getChooseEditorsAndReviewersFormFields(final String issn, final String editor) {
+        Assert.notNull(issn, "Magazine issn can't be null!");
+        Assert.notNull(editor, "Editor username can't be null!");
+
+        final Magazine magazine = this.magazineService.findByIssn(issn);
+
+        if (magazine.getPayment().equals(PaymentType.AUTHOR) && magazine.getMembershipPrice() == null)
+            throw new MembershipPriceIsNotSetException(issn);
+
         final String processInstanceId = this.getProcessInstanceId(issn, editor);
 
         final Task task = this.util.getActiveUserTaskByDefinitionKey(processInstanceId, MagazineCreationServiceImpl.CHOOSE_EDITORS_AND_REVIEWERS_TASK);
@@ -157,7 +216,7 @@ public class MagazineCreationServiceImpl implements MagazineCreationService, Jav
 
         final List<FormField> formFields = this.formService.getTaskFormData(task.getId()).getFormFields();
 
-        this.util.fillMultipleEnumFormFields(this.magazineService.findByIssn(issn),
+        this.util.fillMultipleEnumFormFields(magazine,
                 formFields,
                 UserEnumFormFieldDto.builder()
                         .id(MagazineCreationServiceImpl.EDITORS)

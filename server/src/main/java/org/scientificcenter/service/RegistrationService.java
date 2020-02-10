@@ -8,6 +8,8 @@ public interface RegistrationService {
 
     FormFieldsDto beginRegistrationProcess();
 
+    FormFieldsDto createRegistrationFormTask(final String processInstanceId);
+
     void registerUser(RegistrationUserDto registrationUserDto, final String processInstanceId);
 
     FormFieldsDto getConfirmRegistrationFormFields(String processInstanceId);

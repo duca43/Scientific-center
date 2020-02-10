@@ -1,0 +1,18 @@
+button.pdf-file {
+    font-size: 220%; 
+    background: none; 
+    border: none; 
+    outline: none;
+    color: white;
+    transition: transform .2s;
+}
+
+button.pdf-file:hover {
+    transform: scale(1.5);
+}
+
+.pdf-file-hint {
+    font-size: 80% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}

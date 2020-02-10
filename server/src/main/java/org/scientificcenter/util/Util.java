@@ -2,18 +2,19 @@ package org.scientificcenter.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.FormService;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.form.FormField;
+import org.camunda.bpm.engine.impl.form.type.EnumFormType;
 import org.camunda.bpm.engine.task.Task;
+import org.scientificcenter.dto.CreateScientificPaperDto;
 import org.scientificcenter.dto.FormFieldsDto;
 import org.scientificcenter.dto.UserEnumFormFieldDto;
-import org.scientificcenter.model.Authority;
-import org.scientificcenter.model.Magazine;
-import org.scientificcenter.model.ScientificArea;
-import org.scientificcenter.model.User;
+import org.scientificcenter.model.*;
 import org.scientificcenter.service.AuthorityService;
 import org.scientificcenter.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -24,15 +25,30 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Util {
 
+    public static final String HTTP_PREFIX = "http://";
+    public static final String HTTPS_PREFIX = "https://";
+    private static final String SCIENTIFIC_PAPER_DTO = "scientificPaperDto";
+    private static final String DECISION_TASK = "Decision_task";
+    private final static String DECISION = "decision";
+    @Value("${ip.address}")
+    public String SERVER_ADDRESS;
+    @Value("${frontend.address}")
+    public String FRONTEND_ADDRESS;
+    @Value("${frontend.port}")
+    public String FRONTEND_PORT;
+    @Value("${gateway-port}")
+    public String GATEWAY_PORT;
     private final TaskService taskService;
     private final FormService formService;
+    private final RuntimeService runtimeService;
     private final UserService userService;
     private final AuthorityService authorityService;
 
     @Autowired
-    public Util(final TaskService taskService, final FormService formService, final UserService userService, final AuthorityService authorityService) {
+    public Util(final TaskService taskService, final FormService formService, final RuntimeService runtimeService, final UserService userService, final AuthorityService authorityService) {
         this.taskService = taskService;
         this.formService = formService;
+        this.runtimeService = runtimeService;
         this.userService = userService;
         this.authorityService = authorityService;
     }
@@ -94,5 +110,42 @@ public class Util {
         ((MultivaluedEnumFormType) formField.getType()).getValues().clear();
         ((MultivaluedEnumFormType) formField.getType()).getValues().putAll(users);
         Util.log.info("Added {} users into multivalued enum form field '{}'", users.values().size(), field);
+    }
+
+    public FormFieldsDto getMakeADecisionTaskFormFieldsDto(final String processInstanceId, final String assignee) {
+        final Task makeDecisionTask = this.taskService.createTaskQuery()
+                .processInstanceId(processInstanceId)
+                .taskDefinitionKey(DECISION_TASK)
+                .taskAssignee(assignee)
+                .active()
+                .singleResult();
+
+        if (makeDecisionTask != null) {
+            log.info("Make decision task assigned to '{}' is found", makeDecisionTask.getAssignee());
+            final FormFieldsDto formFieldsDto = this.getTaskFormFields(makeDecisionTask.getId());
+            this.fillRecommendationsEnum(formFieldsDto.getFormFields(), DECISION);
+            final CreateScientificPaperDto createScientificPaperDto = (CreateScientificPaperDto) this.runtimeService.getVariable(formFieldsDto.getProcessInstanceId(), SCIENTIFIC_PAPER_DTO);
+            formFieldsDto.setToken(createScientificPaperDto.getTitle());
+            return formFieldsDto;
+        }
+
+        log.info("Make decision task is not found");
+        return null;
+    }
+
+    public void fillRecommendationsEnum(final List<FormField> formFields, final String fieldId) {
+        for (final FormField formField : formFields) {
+            if (formField.getId().equals(fieldId)) {
+                final Map<String, String> recommendationsMap = Arrays.stream(Recommendation.values())
+                        .collect(Collectors.toMap(Recommendation::getType,
+                                recommendation -> {
+                                    final String name = recommendation.name();
+                                    return name.substring(0, 1).toUpperCase() + name.substring(1).replace("_", " ").toLowerCase();
+                                }));
+                ((EnumFormType) formField.getType()).getValues().putAll(recommendationsMap);
+                log.info("Added {} recommendations into enum form field '{}'", recommendationsMap.values().size(), fieldId);
+                break;
+            }
+        }
     }
 }

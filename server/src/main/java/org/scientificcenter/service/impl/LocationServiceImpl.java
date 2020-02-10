@@ -33,13 +33,17 @@ public class LocationServiceImpl implements LocationService {
         Assert.noNullElements(Stream.of(location.getLatitude(), location.getLongitude()).toArray(),
                 "Both latitude and longitude must be set!");
 
+        log.info("Saving location with latitude '{}' and longitude '{}'", location.getLatitude(), location.getLongitude());
+
         final Location locationTmp = this.findByLatitudeAndLongitude(location.getLatitude(), location.getLongitude());
 
         if (locationTmp != null) {
-            LocationServiceImpl.log.info("Location with latitude '{}' and longitude '{}' already exists", location.getLatitude(), location.getLongitude());
+            log.info("Location with latitude '{}' and longitude '{}' already exists", location.getLatitude(), location.getLongitude());
             return locationTmp;
         }
 
-        return this.locationRepository.save(location);
+        this.locationRepository.save(location);
+        log.info("Location with latitude '{}' and longitude '{}' saved successfully", location.getLatitude(), location.getLongitude());
+        return location;
     }
 }

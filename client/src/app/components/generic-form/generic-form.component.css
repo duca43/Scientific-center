@@ -1,0 +1,34 @@
+.drop-box {
+  cursor: pointer;
+  background: #F8F8F8;
+  text-align: center;
+  color: black;
+  font-size: 120%;
+  padding: 150px 50px;
+  outline: 3px dashed var(--primary);
+  outline-offset: -10px;
+  -webkit-transition: outline-offset .25s ease-in-out, opacity .25s linear;
+  transition: outline-offset .25s ease-in-out, opacity .25s linear;
+}
+ 
+.drag-over-title {
+  display: none;
+}
+ 
+.drop-box.dragover {
+  opacity: 0.7;
+  outline-offset: -25px;
+}
+ 
+.drop-box.dragover .drag-over-title {
+  opacity: 0.7;
+  display: block;
+}
+ 
+.drop-box.dragover .drag-in-title {
+  display: none;
+}
+ 
+input[type='file'] {
+  display: none;
+}

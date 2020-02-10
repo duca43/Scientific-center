@@ -7,6 +7,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.modelmapper.ModelMapper;
 import org.scientificcenter.dto.AccountVerificationDto;
 import org.scientificcenter.dto.RegistrationUserDto;
+import org.scientificcenter.dto.UserDto;
 import org.scientificcenter.exception.UserNotFoundException;
 import org.scientificcenter.model.Authority;
 import org.scientificcenter.model.Location;
@@ -27,6 +28,7 @@ import org.springframework.util.Assert;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -34,7 +36,7 @@ import java.util.stream.Stream;
 public class UserServiceImpl implements UserService, UserDetailsService, JavaDelegate {
 
     private final UserRepository userRepository;
-    private final ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper;
     private final AuthorityService authorityService;
     private final LocationService locationService;
     private final PasswordEncoder passwordEncoder;
@@ -43,10 +45,12 @@ public class UserServiceImpl implements UserService, UserDetailsService, JavaDel
     private static final String USER_ENABLED = "user_enabled";
     private static final String ROLE_ADMINISTRATOR = "ROLE_ADMINISTRATOR";
     private static final String ROLE_EDITOR = "ROLE_EDITOR";
+    private static final String EDITORS_GROUP_ID = "editors";
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final AuthorityService authorityService, final LocationService locationService, final PasswordEncoder passwordEncoder, final IdentityService identityService) {
+    public UserServiceImpl(final UserRepository userRepository, final ModelMapper modelMapper, final AuthorityService authorityService, final LocationService locationService, final PasswordEncoder passwordEncoder, final IdentityService identityService) {
         this.userRepository = userRepository;
+        this.modelMapper = modelMapper;
         this.authorityService = authorityService;
         this.locationService = locationService;
         this.passwordEncoder = passwordEncoder;
@@ -114,9 +118,12 @@ public class UserServiceImpl implements UserService, UserDetailsService, JavaDel
     }
 
     @Override
-    public List<User> findAllNonAdminUsers() {
+    public List<UserDto> findAllNonAdminUsers() {
         final Authority adminAuthority = this.authorityService.findByName(UserServiceImpl.ROLE_ADMINISTRATOR);
-        return this.userRepository.findAllByAuthoritiesNotContains(adminAuthority);
+        return this.userRepository.findAllByAuthoritiesNotContains(adminAuthority)
+                .stream()
+                .map(user -> this.modelMapper.map(user, UserDto.class))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -139,7 +146,10 @@ public class UserServiceImpl implements UserService, UserDetailsService, JavaDel
         camundaUser.setFirstName(user.getFirstname());
         camundaUser.setLastName(user.getLastname());
         this.identityService.saveUser(camundaUser);
-        UserServiceImpl.log.info("Username: {}. Camunda user is saved successfully", camundaUser.getId());
+        log.info("Username: {}. Editor is saved successfully as a camunda user", camundaUser.getId());
+
+        this.identityService.createMembership(camundaUser.getId(), EDITORS_GROUP_ID);
+        log.info("Camunda user with username '{}' is added to group '{}", camundaUser.getId(), EDITORS_GROUP_ID);
 
         return user;
     }
@@ -147,6 +157,11 @@ public class UserServiceImpl implements UserService, UserDetailsService, JavaDel
     @Override
     public List<User> findAllByUsernameNotAndAuthoritiesContainsAndScientificAreasIsIn(final String username, final Authority authority, final List<ScientificArea> scientificAreas) {
         return this.userRepository.findDistinctByUsernameNotAndAuthoritiesContainsAndScientificAreasIsIn(username, authority, scientificAreas);
+    }
+
+    @Override
+    public UserDto findUserByUsername(final String username) {
+        return this.modelMapper.map(this.findByUsername(username), UserDto.class);
     }
 
     @Override

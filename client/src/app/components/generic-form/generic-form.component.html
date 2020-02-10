@@ -1,11 +1,25 @@
 <mat-dialog-content [formGroup]="form">
     <mat-form-field *ngFor="let formField of formFields | formFields:false">
         <input matInput *ngIf="formField.type.name === 'string'" type="text" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
-        <input matInput *ngIf="formField.type.name === 'long'" type="number" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <input matInput *ngIf="formField.type.name === 'long' || formField.type.name === 'double'" type="number" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
         <input matInput *ngIf="formField.type.name === 'date'" type="date" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
         <input matInput *ngIf="formField.type.name === 'email'" type="email" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
         <input matInput *ngIf="formField.type.name === 'password'" type="password" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
         <input matInput *ngIf="formField.type.name === 'location'" type="search" [id]="formField.id" formControlName="{{formField.id}}" placeholder="{{formField.label}}">
+        <mat-chip-list *ngIf="formField.type.name === 'string_list'" #chipList>
+            <mat-chip *ngFor="let value of formField.type.values; let i = index;" (removed)="formField.type.values.splice(i, 1);" color="warn" selected>
+              {{value}}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+            <input
+              matInput
+              placeholder="{{formField.label}}"
+              formControlName="{{formField.id}}"
+              [matChipInputFor]="chipList"
+              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+              (matChipInputTokenEnd)="$event.value.trim().length > 0 && formField.type.values.indexOf($event.value.trim()) == -1
+            ? formField.type.values.push($event.value.trim()) : null; $event.input.value = null;">
+        </mat-chip-list>
         <mat-select *ngIf="formField.type.name === 'enum' || formField.type.name.startsWith('multiple_enum_')"
             [compareWith]="compareSelectObjects"
             formControlName="{{formField.id}}"
@@ -19,16 +33,16 @@
             {{formField.label}} is <b>required</b>.
         </div>
         <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.minlength">
-            Length of {{formField.label}} is <b>too short</b>!
+            Too short! Length of {{formField.label}} can't be smaller than <b>{{form.get(formField.id).errors.minlength.value}}</b>
         </div>
         <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.maxlength">
-            Length of {{formField.label}} is <b>too long</b>!
+            Too long! Length of {{formField.label}} can't be larger than <b>{{form.get(formField.id).errors.maxlength.value}}</b>
         </div>
         <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.min">
-            Error! Minimal value of {{formField.label}} can't be  <b>too short</b>!
+            Error! Value of {{formField.label}} can't be lower than <b>{{form.get(formField.id).errors.min.value}}</b>
         </div>
         <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.max">
-            Length of {{formField.label}} is <b>too short</b>!
+            Error! Value of {{formField.label}} can't be greater than <b>{{form.get(formField.id).errors.max.value}}</b>
         </div>
         <div *ngIf="!form.get(formField.id).errors.required && form.get(formField.id).errors.email">
             Invalid email format!
@@ -42,5 +56,39 @@
     </mat-form-field>
     <div *ngFor="let formField of formFields| formFields:true">
         <mat-checkbox *ngIf="formField.type.name === 'boolean'" formControlName="{{formField.id}}">{{formField.label}}</mat-checkbox>
+        <input *ngIf="formField.type.name === 'file_upload'"
+            ng2FileSelect
+            [id]="formField.id"
+            type="file"
+            [uploader]="formField.uploader"/>
+        <div *ngIf="formField.type.name === 'file_upload'" 
+            ng2FileDrop
+            class="drop-box my-3"
+            [ngClass]="{'dragover': formField.isDropOver}"
+            [uploader]="formField.uploader"
+            (fileOver)="formField.isDropOver = $event;"
+            (click)="fileInputClicked(formField.id)">
+            <span class="drag-in-title">Import or drag file here</span>
+            <span class="drag-over-title">Drop the file</span>
+        </div>
+        <table class="table text-white" *ngIf="formField.uploader && formField.uploader.queue && formField.uploader.queue[formField.uploader.queue.length - 1]">
+            <thead>
+            <tr>
+                <th width="50%">Name</th>
+                <th>Size</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><strong>{{ formField.uploader.queue[formField.uploader.queue.length - 1]?.file?.name }}</strong></td>
+                <td *ngIf="formField.uploader.options.isHTML5" nowrap>{{ formField.uploader.queue[formField.uploader.queue.length - 1]?.file?.size/1024/1024 | number:'.2' }} MB</td>
+            </tr>
+            </tbody>
+        </table>
+        <div *ngIf="formField.type.name === 'file_view'" class="row justify-content-center m-2">
+            <button mat-raised-button color="primary" (click)="openPdfViewer(formField.file)">
+                {{formField.label}} <i class="ml-2 fas fa-file-pdf"></i>
+            </button>
+        </div>
     </div>
 </mat-dialog-content>

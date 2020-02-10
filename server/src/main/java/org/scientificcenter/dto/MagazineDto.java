@@ -21,5 +21,9 @@ public class MagazineDto implements Serializable {
     private Boolean enabled;
     private Boolean chosenEditorsAndReviewers;
     private Boolean requestedChanges;
+    private String merchantId;
+    private Boolean enabledAsMerchant;
+    private Double membershipPrice;
+    private String membershipCurrency;
     private List<ScientificArea> scientificAreas;
 }

@@ -1,10 +1,10 @@
 import { NewEditorDialogComponent } from './../new-editor-dialog/new-editor-dialog.component';
 import { UsersService } from './../../services/users/users.service';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { MatTableDataSource, MatPaginator, MatDialog } from '@angular/material';
 import { Util } from 'src/app/utils';
 import {animate, state, style, transition, trigger} from '@angular/animations';
-import *  as Stomp from 'stompjs';
+import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 import { environment } from 'src/environments/environment';
 
@@ -20,7 +20,7 @@ import { environment } from 'src/environments/environment';
     ]),
   ]
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
 
   displayedColumns: string[];
   dataSource = new MatTableDataSource<Element[]>();
@@ -60,9 +60,11 @@ export class UsersComponent implements OnInit {
         this.displayedColumns = this.columns.map(c => c.columnDef);
         this.dataSource.data = users;
       },
-      (response) => {
+      (response: any) => {
         if (response && response.error) {
           this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
         }
       }
     );

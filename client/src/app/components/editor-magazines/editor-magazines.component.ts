@@ -1,20 +1,22 @@
+import { ActivatedRoute } from '@angular/router';
 import { NewMagazineDialogComponent } from './../new-magazine-dialog/new-magazine-dialog.component';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { MagazineService } from 'src/app/services/magazine/magazine.service';
 import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
 import { Util, Authority } from 'src/app/utils';
 import { ChooseEditorsAndReviewersDialogComponent } from '../choose-editors-and-reviewers-dialog/choose-editors-and-reviewers-dialog.component';
-import *  as Stomp from 'stompjs';
+import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 import { environment } from 'src/environments/environment';
+import { SetMembershipPriceDialogComponent } from '../set-membership-price-dialog/set-membership-price-dialog.component';
 
 @Component({
   selector: 'app-editor-magazines',
   templateUrl: './editor-magazines.component.html',
   styleUrls: ['./editor-magazines.component.css']
 })
-export class EditorMagazinesComponent implements OnInit {
+export class EditorMagazinesComponent implements OnInit, OnDestroy {
 
   magazines: any[];
   editor: string;
@@ -24,6 +26,7 @@ export class EditorMagazinesComponent implements OnInit {
   constructor(private dialog: MatDialog,
     private magazineService: MagazineService,
     private authenticationService: AuthenticationService,
+    private activatedRoute: ActivatedRoute,
     private util: Util) { 
       this.setupStompClient();
     }
@@ -31,7 +34,46 @@ export class EditorMagazinesComponent implements OnInit {
   ngOnInit() {
     this.editor = this.authenticationService.getUsername();
     if (this.editor && this.authenticationService.getRoles().includes(Authority.EDITOR)) {
-      this.getMagazines();
+      this.magazineService.getMagazinesCreatedByEditor(this.editor).subscribe(
+        (magazines: any[]) => {
+          this.magazines = this.util.sortArray(magazines, 'name', true);
+
+          const merchantId = this.activatedRoute.snapshot.paramMap.get('merchantId');
+          if (merchantId) {
+            const magazineCompleteRegistrationDto = {merchantId: merchantId, editorUsername: this.editor};
+            this.magazineService.completeMagazineRegistration(magazineCompleteRegistrationDto).subscribe(
+              (registrationCompleteDto: any) => {
+                if (registrationCompleteDto) {
+                  if (registrationCompleteDto.flag) {
+                    this.magazines.forEach(magazine => {
+                      if (magazine.merchantId === merchantId) {
+                        magazine.enabledAsMerchant = true;
+                      }
+                    });
+                  }
+                  this.util.showSnackBar(registrationCompleteDto.message, registrationCompleteDto.flag);
+                } else {
+                  this.util.showSnackBar('Unexpected error! Please, try again later', false);
+                }
+              },
+              (response: any) => {
+                  if (response && response.error) {
+                    this.util.showSnackBar(response.error.message, false);
+                  } else {
+                    this.util.showSnackBar('Unexpected error! Please, try again later', false);
+                  }
+              }
+            );
+          }
+        },
+        (response: any) => {
+          if (response && response.error) {
+            this.util.showSnackBar(response.error.message, false);
+          } else {
+            this.util.showSnackBar('Unexpected error! Please, try again later', false);
+          }
+        }
+      );
     }
   }
 
@@ -40,8 +82,12 @@ export class EditorMagazinesComponent implements OnInit {
       (magazines: any[]) => {
         this.magazines = this.util.sortArray(magazines, 'name', true);
       },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }
@@ -70,13 +116,17 @@ export class EditorMagazinesComponent implements OnInit {
           (successFlag: any) => {
             if(successFlag) {
               this.getMagazines();
-              this.util.showSnackBar('You have successfully created new magazine! But, it\' not active yet, because you have to assign editors and reviewers.', true);
+              this.util.showSnackBar('You have successfully created new magazine! But, it\' not active yet, because you have to set membership price and/or assign editors and reviewers.', true);
             }
           }
         );
       },
-      () => {
-        this.util.showSnackBar('Error while creating magazine registration form. Please try again later.', false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }
@@ -121,8 +171,12 @@ export class EditorMagazinesComponent implements OnInit {
           }
         );
       },
-      () => {
-        this.util.showSnackBar('Error while creating choose editors and reviewers form. Please try again later.', false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }
@@ -156,8 +210,62 @@ export class EditorMagazinesComponent implements OnInit {
           }
         );
       },
-      () => {
-        this.util.showSnackBar('Error while creating magazine edit form. Please try again later.', false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
+      }
+    );
+  }
+
+  registerMagazineAsMerchant(magazine: any) {
+    const magazineRegistrationDto = {magazineId: magazine.id, editorUsername: this.editor};
+    this.magazineService.registerMagazineAsMerchant(magazineRegistrationDto).subscribe(
+      (redirectionResponse: any) => {
+        if (redirectionResponse) {
+          window.location.href = redirectionResponse.redirectionUrl;
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
+      },
+      (response: any) => {
+          if (response && response.error) {
+            this.util.showSnackBar(response.error.message, false);
+          } else {
+            this.util.showSnackBar('Unexpected error! Please, try again later', false);
+          }
+      }
+    );
+  }
+
+  openSetMembershipPriceDialog(magazine: any) {
+    this.magazineService.getSetMembershipPriceFormFields(magazine.issn, this.authenticationService.getUsername()).subscribe(
+      (formFieldsDto: any) => {
+        
+        const form = this.util.createGenericForm(formFieldsDto.formFields);
+
+        this.dialog.open(SetMembershipPriceDialogComponent,
+        {
+          data: {
+            'editor': this.authenticationService.getUsername(),
+            'magazine': magazine,
+            'taskId': formFieldsDto.taskId,
+            'formFields': formFieldsDto.formFields,
+            'form': form
+          },
+          disableClose: true,
+          autoFocus: true,
+          width: '50%'
+        });
+      },
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }
@@ -170,9 +278,16 @@ export class EditorMagazinesComponent implements OnInit {
       _this.stompClient.subscribe("/magazine/status", 
         (message) => {
           const statusMessage: string = message.body;
-          console.dir(statusMessage);
           _this.getMagazines();
           _this.util.showSnackBar(statusMessage, true);
+        }
+      );
+
+      _this.stompClient.subscribe("/magazine/membership_price", 
+        (message) => {
+          const completionMessage: string = message.body;
+          _this.getMagazines();
+          _this.util.showSnackBar(completionMessage, true);
         }
       );
     });

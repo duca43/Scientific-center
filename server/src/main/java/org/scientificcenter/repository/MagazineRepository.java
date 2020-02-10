@@ -13,4 +13,6 @@ public interface MagazineRepository extends JpaRepository<Magazine, Long> {
     Magazine findByIssn(String issn);
 
     List<Magazine> findAllByMainEditor(User mainEditor);
+
+    Magazine findByMerchantId(String merchantId);
 }

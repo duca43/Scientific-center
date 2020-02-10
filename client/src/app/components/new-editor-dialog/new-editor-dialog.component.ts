@@ -43,9 +43,13 @@ export class NewEditorDialogComponent implements AfterViewInit {
       () => {
         this.dialogRef.close(editor);
       },
-      (response) => {
-        this.util.showSnackBar(response.error.message, false);
+      (response: any) => {
         this.requestProcessing = false;
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }

@@ -49,6 +49,19 @@ public class MagazineController {
         return ResponseEntity.ok(this.magazineService.findByMainEditor(editor));
     }
 
+    @GetMapping(value = "/membership_price/{issn}/{editor}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
+    public ResponseEntity<FormFieldsDto> getSetMembershipPriceFormFields(@PathVariable final String issn, @PathVariable final String editor) {
+        return ResponseEntity.ok(this.magazineCreationService.getSetMembershipPriceFormFields(issn, editor));
+    }
+
+    @PostMapping(value = "/membership_price/{taskId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
+    public ResponseEntity<?> setMembershipPrice(@RequestBody final MembershipPriceDto membershipPriceDto, @PathVariable final String taskId) {
+        this.magazineCreationService.setMembershipPrice(membershipPriceDto, taskId);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(value = "/choose_editors_and_reviewers/{issn}/{editor}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_EDITOR')")
     public ResponseEntity<FormFieldsDto> getChooseEditorsAndReviewersFormFields(@PathVariable final String issn, @PathVariable final String editor) {
@@ -79,5 +92,17 @@ public class MagazineController {
     public ResponseEntity<?> checkMagazineData(@RequestBody final CheckMagazineDto checkMagazineDto) {
         this.magazineCreationService.checkMagazineData(checkMagazineDto);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/register_as_merchant", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
+    public ResponseEntity<RedirectionResponse> registerMagazineAsMerchant(@RequestBody final MagazineRegistrationDto magazineRegistrationDto) {
+        return ResponseEntity.ok(this.magazineService.registerMagazineAsMerchant(magazineRegistrationDto));
+    }
+
+    @PostMapping(value = "/register_as_merchant/complete", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ROLE_EDITOR')")
+    public ResponseEntity<RegistrationCompleteDto> completeMagazineRegistration(@RequestBody final MagazineRegistrationCompleteDto magazineRegistrationCompleteDto) {
+        return ResponseEntity.ok(this.magazineService.completeMagazineRegistration(magazineRegistrationCompleteDto));
     }
 }

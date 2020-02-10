@@ -1,0 +1,218 @@
+<div class="container-fluid">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mt-1" style="background: none !important; margin-bottom: 0 !important;">
+          <li class="breadcrumb-item"><a [routerLink]="['/']">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">My profile</li>
+        </ol>
+    </nav>
+    <div class="row">
+        <div class="col-3">
+            <div class="list-group mt-3" role="tablist">
+                <a class="list-group-item list-group-item-action list-group-item-dark active" data-toggle="list" href="#basicInfoId" role="tab"> Basic info </a>
+                <a class="list-group-item list-group-item-action list-group-item-dark" data-toggle="list" href="#scientificPapersId" role="tab"> Scientific papers </a>
+                <a class="list-group-item list-group-item-action list-group-item-dark" data-toggle="list" href="#membershipPaymentsId" role="tab"> Membership payments </a>
+            </div>
+        </div>
+        <div class="col-9">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="basicInfoId">
+                    <div class="row justify-content-center mx-5">
+                        <div class="card bg-dark m-3 w-100 mat-elevation-z12" *ngIf="user">
+                            <div class="card-header pl-4 pt-4">
+                                <h1 class="card-title display-4">Hello, {{user.firstname}} {{user.lastname}}</h1>
+                            </div>
+                            <div class="card-body">
+                                <div class="row justify-content-center">
+                                    <div class="card bg-info m-5 mat-elevation-z12" style="width: 45%;">
+                                        <div class="card-header text-center">
+                                            <h4 class="card-title">About you</h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text"><i class="mr-2 fas fa-envelope"></i> {{user.email}}</p>
+                                            <p class="card-text"><i class="mr-2 fas fa-user-tie"></i> {{user.title && user.title != '' ? user.title : '/'}}</p>
+                                            <p class="card-text"><i class="mr-2 fas fa-map-marker-alt"></i> {{user.location.address}}</p>
+                                            <p class="card-text"><i class="mr-2 fas fa-city"></i> {{user.location.city}}</p>
+                                            <p class="card-text"><i class="mr-2 fas fa-flag"></i> {{user.location.country}}</p>
+                                        </div>
+                                    </div>
+                                    <div class="row m-5" style="width: 35%;">
+                                        <div class="col-12" *ngIf="user.scientificAreas && user.scientificAreas.length > 0">
+                                            <h5>Scientific areas</h5>
+                                            <mat-chip-list>
+                                            <mat-chip *ngFor="let area of user.scientificAreas" color="primary" selected>{{area.name}}</mat-chip>
+                                            </mat-chip-list>
+                                        </div>
+                                        <div class="col-12" *ngIf="user.authorities && user.authorities.length > 0">
+                                            <h5>User authorities</h5>
+                                            <mat-chip-list>
+                                                <mat-chip *ngFor="let item of user.authorities" color="warn" selected>{{item.authority}}</mat-chip>
+                                            </mat-chip-list>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="scientificPapersId">
+                    <div class="row justify-content-end">
+                        <mat-list>
+                            <mat-list-item>
+                                <app-add-scientific-paper></app-add-scientific-paper>
+                            </mat-list-item>
+                        </mat-list>
+                    </div>
+                    <div class="row d-flex flex-wrap justify-content-center m-3">
+                        <div class="m-3" *ngIf="!scientificPapers || scientificPapers.length === 0">
+                            <h2>You have not created any scientific paper yet</h2>
+                        </div>
+                        <div class="card p-2 mat-elevation-z12 text-white bg-dark my-3 w-100" *ngFor="let paper of scientificPapers">
+                            <div class="card-header">
+                                <div class="float-right d-flex flex-column">
+                                    <button class="pdf-file"
+                                        (click)="openPdfViewer(paper)">
+                                        <i class="ml-2 fas fa-file-pdf"></i>
+                                    </button>
+                                    <mat-hint class="pdf-file-hint">Click to open PDF document</mat-hint>
+                                </div>
+                                <h1 class="card-title ml-5 mt-3">{{paper.title}}</h1>
+                            </div>
+                            <div class="card-body px-3">
+                                <p class="card-text"><b>Magazine: {{paper.magazineDto.name}}</b></p>
+                                <p class="card-text">
+                                    <b>Abstract:</b>
+                                    <span *ngIf="!paper.paperAbstract" class="ml-2">/</span>
+                                    <mat-form-field *ngIf="paper.paperAbstract">
+                                        <textarea matInput disabled>{{paper.paperAbstract}}</textarea>
+                                    </mat-form-field>
+                                </p>
+                                <p class="card-text">
+                                    <b>Scientific area:</b>
+                                    <mat-chip class="ml-2" color="primary" selected>{{paper.scientificArea?.name}}</mat-chip>
+                                </p>
+                                <p class="card-text">
+                                    <b>Keywords:</b>
+                                    <span *ngIf="!paper.keywords || paper.keywords.length === 0" class="ml-2">/</span>
+                                    <mat-chip class="ml-2 mr-1" *ngFor="let keyword of paper.keywords" color="warn" selected>{{keyword.name}}</mat-chip>
+                                </p>
+                                <div class="row my-3">
+                                    <div class="col-3">
+                                        <p class="card-text mt-2 mb-4">
+                                            <b>Enabled:</b>
+                                        </p>
+                                        <p class="card-text mt-4 mb-2" *ngIf="!paper.enabled">
+                                            <b>Chosen co-authors:</b>
+                                        </p>
+                                    </div>
+                                    <div class="col-1">
+                                        <p>
+                                            <span class="badge my-1"
+                                                    [ngClass]="{'badge-success': paper.enabled, 'badge-danger': !paper.enabled}"
+                                                    style="font-size: 120%;">
+                                                    <i *ngIf="paper.enabled" class="fas fa-check"></i>
+                                                    <i *ngIf="!paper.enabled" class="fas fa-times"></i>
+                                            </span>
+                                        </p>
+                                        <p *ngIf="!paper.enabled">
+                                            <span class="badge my-1"
+                                                    [ngClass]="{'badge-success': paper.chosenCoauthors, 'badge-danger': !paper.chosenCoauthors}"
+                                                    style="font-size: 120%;">
+                                                    <i *ngIf="paper.chosenCoauthors" class="fas fa-check"></i>
+                                                    <i *ngIf="!paper.chosenCoauthors" class="fas fa-times"></i>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-3" *ngIf="paper.chosenCoauthors && !paper.enabled">
+                                        <p class="card-text mt-2 mb-4">
+                                            <b>Approved by main editor:</b>
+                                        </p>
+                                        <p class="card-text mt-4 mb-2">
+                                            <b>PDF file formatted well:</b>
+                                        </p> 
+                                    </div>
+                                    <div class="col-1" *ngIf="paper.chosenCoauthors && !paper.enabled">
+                                        <p>
+                                            <span class="badge my-1"
+                                                    [ngClass]="{'badge-success': paper.approvedByMainEditor, 'badge-danger': !paper.approvedByMainEditor}"
+                                                    style="font-size: 120%;">
+                                                    <i *ngIf="paper.approvedByMainEditor" class="fas fa-check"></i>
+                                                    <i *ngIf="!paper.approvedByMainEditor" class="fas fa-times"></i>
+                                            </span>
+                                        </p>
+                                        <p>
+                                            <span class="badge my-1"
+                                                [ngClass]="{'badge-success': paper.pdfFormattedWell, 'badge-danger': !paper.pdfFormattedWell}"
+                                                style="font-size: 120%;">
+                                                <i *ngIf="paper.pdfFormattedWell" class="fas fa-check"></i>
+                                                <i *ngIf="!paper.pdfFormattedWell" class="fas fa-times"></i>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-3" *ngIf="paper.chosenCoauthors && !paper.enabled">
+                                        <p class="card-text mt-2 mb-4">
+                                            <b>Requested PDF reupload:</b>
+                                        </p> 
+                                    </div>
+                                    <div class="col-1" *ngIf="paper.chosenCoauthors && !paper.enabled">
+                                        <p>
+                                            <span class="badge ml-3"
+                                                [ngClass]="{'badge-success': paper.requestedChanges, 'badge-danger': !paper.requestedChanges}"
+                                                style="font-size: 120%;">
+                                                <i *ngIf="paper.requestedChanges" class="fas fa-check"></i>
+                                                <i *ngIf="!paper.requestedChanges" class="fas fa-times"></i>
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button mat-raised-button color="primary" 
+                                    data-toggle="collapse"
+                                    [attr.data-target]="'#_' + paper.id"
+                                    (click)="paper.showCoauthors = !paper.showCoauthors"
+                                    *ngIf="paper.chosenCoauthors && paper.coauthorDtos.length &gt; 0">
+                                    {{paper.showCoauthors ? 'Hide' : 'Show'}} co-authors
+                                </button>
+                                <div class="collapse row justify-content-center mat-elevation-z12 m-3"
+                                    *ngIf="paper.chosenCoauthors && paper.coauthorDtos.length &gt; 0"
+                                    [id]="'_' + paper.id">
+                                    <table mat-table [dataSource]="paper.dataSource" class="w-100" style="background-color: var(--info);">
+                                        <ng-container *ngFor="let column of paper.columns;" [matColumnDef]="column.columnDef">
+                                            <th mat-header-cell *matHeaderCellDef> {{ column.header }} </th>
+                                            <td mat-cell *matCellDef="let row">{{ column.cell(row) }}</td>
+                                        </ng-container>
+                                        <tr mat-header-row *matHeaderRowDef="paper.displayedColumns"></tr>
+                                        <tr mat-row *matRowDef="let element; columns: paper.displayedColumns;">
+                                        </tr>
+                                    </table>
+                                    <mat-paginator [pageSize]="3" showFirstLastButtons class="w-100" style="background-color: var(--info);"></mat-paginator>
+                                </div>
+                                <div class="row justify-content-center mt-3">
+                                    <button mat-raised-button
+                                        class="m-2"
+                                        color="primary"
+                                        (click)="openAddCoauthorsDialog(paper)"
+                                        *ngIf="!paper.chosenCoauthors">
+                                        Add co-authors
+                                        <i class="ml-2 fas fa-people-carry"></i>
+                                    </button>
+                                    <button mat-raised-button
+                                        class="m-2"
+                                        color="primary"
+                                        (click)="openCorrectDialog(paper)"
+                                        *ngIf="paper.requestedChanges">
+                                        Reupload PDF document
+                                        <i class="ml-2 far fa-file-pdf"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="membershipPaymentsId">
+                    <div class="row justify-content-center">
+                        <h1>MEMBERSHIP PAYMENTS - UNDER CONSTRUCTION</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

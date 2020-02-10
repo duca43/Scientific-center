@@ -43,6 +43,18 @@ public class Magazine implements Serializable {
     @Column
     private Boolean requestedChanges;
 
+    @Column(unique = true)
+    private String merchantId;
+
+    @Column
+    private Boolean enabledAsMerchant;
+
+    @Column
+    private Double membershipPrice;
+
+    @Column
+    private String membershipCurrency;
+
     @ManyToOne(optional = false)
     private User mainEditor;
 
@@ -54,4 +66,10 @@ public class Magazine implements Serializable {
 
     @ManyToMany
     private Set<ScientificArea> scientificAreas;
+
+    @OneToMany(mappedBy = "magazine")
+    private Set<Payment> membershipPayments;
+
+    @OneToMany(mappedBy = "magazine")
+    private Set<Subscription> subscriptions;
 }

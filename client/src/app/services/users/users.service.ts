@@ -15,4 +15,8 @@ export class UsersService {
   addEditor(editor: any) {
     return this.http.post('/api/users/editor', editor);
   }
+
+  getByUsername(username: string) {
+    return this.http.get('/api/users/'.concat(username));
+  }
 }

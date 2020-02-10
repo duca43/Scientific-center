@@ -4,8 +4,8 @@ import java.util.Arrays;
 
 public enum PaymentType {
 
-    EDITOR("editor"),
-    USER("user");
+    AUTHOR("author"),
+    READER("reader");
 
     private final String type;
 
@@ -18,7 +18,6 @@ public enum PaymentType {
     }
 
     public static PaymentType valueOfGivenString(final String value) {
-        return Arrays.asList(PaymentType.values()).stream().filter(paymentType -> paymentType.type.equalsIgnoreCase(value)).findFirst().orElse(null);
+        return Arrays.stream(PaymentType.values()).filter(paymentType -> paymentType.type.equalsIgnoreCase(value)).findFirst().orElse(null);
     }
-
 }

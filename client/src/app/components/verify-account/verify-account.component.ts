@@ -66,8 +66,12 @@ export class VerifyAccountComponent implements OnInit {
           }
         );
       },
-      (response) => {
-        this.util.showSnackBar('Error while creating account verification form. Please try again later.', false);
+      (response: any) => {
+        if (response && response.error) {
+          this.util.showSnackBar(response.error.message, false);
+        } else {
+          this.util.showSnackBar('Unexpected error! Please, try again later', false);
+        }
       }
     );
   }
